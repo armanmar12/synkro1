@@ -1,0 +1,93 @@
+﻿{
+    "properties":  {
+                       "connection_id":  {
+                                             "type":  "integer",
+                                             "title":  "Connection Id"
+                                         },
+                       "chat_id":  {
+                                       "type":  "integer",
+                                       "title":  "Chat Id"
+                                   },
+                       "source_chat_id":  {
+                                              "type":  "string",
+                                              "title":  "Source Chat Id"
+                                          },
+                       "phone":  {
+                                     "anyOf":  [
+                                                   {
+                                                       "type":  "string"
+                                                   },
+                                                   {
+                                                       "type":  "null"
+                                                   }
+                                               ],
+                                     "title":  "Phone"
+                                 },
+                       "username":  {
+                                        "anyOf":  [
+                                                      {
+                                                          "type":  "string"
+                                                      },
+                                                      {
+                                                          "type":  "null"
+                                                      }
+                                                  ],
+                                        "title":  "Username"
+                                    },
+                       "profile_link":  {
+                                            "anyOf":  [
+                                                          {
+                                                              "type":  "string"
+                                                          },
+                                                          {
+                                                              "type":  "null"
+                                                          }
+                                                      ],
+                                            "title":  "Profile Link"
+                                        },
+                       "name":  {
+                                    "type":  "string",
+                                    "title":  "Name"
+                                },
+                       "last_message":  {
+                                            "anyOf":  [
+                                                          {
+                                                              "$ref":  "#/components/schemas/Message"
+                                                          },
+                                                          {
+                                                              "type":  "null"
+                                                          }
+                                                      ]
+                                        },
+                       "unanswered_count":  {
+                                                "type":  "integer",
+                                                "title":  "Unanswered Count"
+                                            },
+                       "is_group":  {
+                                        "type":  "boolean",
+                                        "title":  "Is Group",
+                                        "default":  false
+                                    },
+                       "blacklist_item_id":  {
+                                                 "anyOf":  [
+                                                               {
+                                                                   "type":  "integer",
+                                                                   "exclusiveMinimum":  0.0
+                                                               },
+                                                               {
+                                                                   "type":  "null"
+                                                               }
+                                                           ],
+                                                 "title":  "Blacklist Item Id"
+                                             }
+                   },
+    "type":  "object",
+    "required":  [
+                     "connection_id",
+                     "chat_id",
+                     "source_chat_id",
+                     "name",
+                     "unanswered_count"
+                 ],
+    "title":  "Chat"
+}

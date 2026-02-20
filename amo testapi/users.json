@@ -1,0 +1,223 @@
+{
+  "status": 200,
+  "data": {
+    "_total_items": 2,
+    "_page": 1,
+    "_page_count": 1,
+    "_links": {
+      "self": {
+        "href": "https://globalfruit.amocrm.ru/api/v4/users/?page=1&limit=250"
+      }
+    },
+    "_embedded": {
+      "users": [
+        {
+          "id": 13451202,
+          "name": "Global Fruit",
+          "email": "globalfruitastana@yahoo.com",
+          "lang": "ru",
+          "rights": {
+            "leads": {
+              "view": "A",
+              "edit": "A",
+              "add": "A",
+              "delete": "A",
+              "export": "A"
+            },
+            "contacts": {
+              "view": "A",
+              "edit": "A",
+              "add": "A",
+              "delete": "A",
+              "export": "A"
+            },
+            "companies": {
+              "view": "A",
+              "edit": "A",
+              "add": "A",
+              "delete": "A",
+              "export": "A"
+            },
+            "tasks": {
+              "edit": "A",
+              "delete": "A"
+            },
+            "mail_access": true,
+            "catalog_access": true,
+            "files_access": true,
+            "status_rights": [
+              {
+                "entity_type": "leads",
+                "pipeline_id": 10539854,
+                "status_id": 83155538,
+                "rights": {
+                  "view": "A",
+                  "edit": "A",
+                  "delete": "A"
+                }
+              }
+            ],
+            "catalog_rights": [
+              {
+                "catalog_id": 14303,
+                "rights": {
+                  "add": "A",
+                  "edit": "A",
+                  "view": "A",
+                  "delete": "A",
+                  "export": "A"
+                }
+              },
+              {
+                "catalog_id": 14305,
+                "rights": {
+                  "add": "A",
+                  "edit": "A",
+                  "view": "A",
+                  "delete": "A",
+                  "export": "A"
+                }
+              },
+              {
+                "catalog_id": 14307,
+                "rights": {
+                  "add": "A",
+                  "edit": "A",
+                  "view": "A",
+                  "delete": "A",
+                  "export": "A"
+                }
+              },
+              {
+                "catalog_id": 14377,
+                "rights": {
+                  "add": "A",
+                  "edit": "A",
+                  "view": "A",
+                  "delete": "A",
+                  "export": "A"
+                }
+              }
+            ],
+            "custom_fields_rights": null,
+            "oper_day_reports_view_access": false,
+            "oper_day_user_tracking": false,
+            "is_admin": true,
+            "is_free": false,
+            "is_active": true,
+            "group_id": 0,
+            "role_id": null
+          },
+          "_links": {
+            "self": {
+              "href": "https://globalfruit.amocrm.ru/api/v4/users/13451202/?page=1&limit=250"
+            }
+          }
+        },
+        {
+          "id": 13451338,
+          "name": "gfamomanager1@outlook.com",
+          "email": "gfamomanager1@outlook.com",
+          "lang": "ru",
+          "rights": {
+            "leads": {
+              "view": "A",
+              "edit": "A",
+              "add": "A",
+              "delete": "D",
+              "export": "A"
+            },
+            "contacts": {
+              "view": "A",
+              "edit": "A",
+              "add": "A",
+              "delete": "A",
+              "export": "A"
+            },
+            "companies": {
+              "view": "D",
+              "edit": "D",
+              "add": "D",
+              "delete": "D",
+              "export": "D"
+            },
+            "tasks": {
+              "edit": "A",
+              "delete": "A"
+            },
+            "mail_access": true,
+            "catalog_access": false,
+            "files_access": true,
+            "status_rights": [
+              {
+                "entity_type": "leads",
+                "pipeline_id": 10539854,
+                "status_id": 83155538,
+                "rights": {
+                  "view": "A",
+                  "edit": "A",
+                  "delete": "A"
+                }
+              }
+            ],
+            "catalog_rights": [
+              {
+                "catalog_id": 14303,
+                "rights": {
+                  "add": "D",
+                  "edit": "D",
+                  "view": "D",
+                  "delete": "D",
+                  "export": "D"
+                }
+              },
+              {
+                "catalog_id": 14305,
+                "rights": {
+                  "add": "D",
+                  "edit": "D",
+                  "view": "D",
+                  "delete": "D",
+                  "export": "D"
+                }
+              },
+              {
+                "catalog_id": 14307,
+                "rights": {
+                  "add": "A",
+                  "edit": "A",
+                  "view": "A",
+                  "delete": "A",
+                  "export": "D"
+                }
+              },
+              {
+                "catalog_id": 14377,
+                "rights": {
+                  "add": "D",
+                  "edit": "D",
+                  "view": "D",
+                  "delete": "D",
+                  "export": "D"
+                }
+              }
+            ],
+            "custom_fields_rights": null,
+            "oper_day_reports_view_access": false,
+            "oper_day_user_tracking": false,
+            "is_admin": false,
+            "is_free": false,
+            "is_active": true,
+            "group_id": 0,
+            "role_id": null
+          },
+          "_links": {
+            "self": {
+              "href": "https://globalfruit.amocrm.ru/api/v4/users/13451338/?page=1&limit=250"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

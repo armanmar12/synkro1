@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+*.pyc
+
+.env
+*.log
+
+amo testapi
+test api
+
+*.json
+*.ps1
+
+supabase
+scripts
+

@@ -1,0 +1,58 @@
+{
+  "status": 200,
+  "data": {
+    "id": 50882869,
+    "name": "Likki",
+    "price": 0,
+    "responsible_user_id": 13451338,
+    "group_id": 0,
+    "status_id": 83426274,
+    "pipeline_id": 10539854,
+    "loss_reason_id": null,
+    "created_by": 0,
+    "updated_by": 0,
+    "created_at": 1771434374,
+    "updated_at": 1771445250,
+    "closed_at": null,
+    "closest_task_at": null,
+    "is_deleted": false,
+    "custom_fields_values": [
+      {
+        "field_id": 2726969,
+        "field_name": "Источник",
+        "field_code": null,
+        "field_type": "select",
+        "values": [
+          {
+            "value": "Target TikTok",
+            "enum_id": 5030757,
+            "enum_code": null
+          }
+        ]
+      }
+    ],
+    "score": null,
+    "account_id": 32878226,
+    "labor_cost": null,
+    "_links": {
+      "self": {
+        "href": "https://globalfruit.amocrm.ru/api/v4/leads/50882869?with=contacts&page=1&limit=250"
+      }
+    },
+    "_embedded": {
+      "tags": [],
+      "companies": [],
+      "contacts": [
+        {
+          "id": 84318095,
+          "is_main": true,
+          "_links": {
+            "self": {
+              "href": "https://globalfruit.amocrm.ru/api/v4/contacts/84318095?with=contacts&page=1&limit=250"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

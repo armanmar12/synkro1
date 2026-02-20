@@ -1,0 +1,20 @@
+﻿{
+    "properties":  {
+                       "data":  {
+                                    "items":  {
+                                                  "$ref":  "#/components/schemas/ContactWithChats"
+                                              },
+                                    "type":  "array",
+                                    "title":  "Data"
+                                },
+                       "response_metadata":  {
+                                                 "$ref":  "#/components/schemas/ResponseMetadata"
+                                             }
+                   },
+    "type":  "object",
+    "required":  [
+                     "data",
+                     "response_metadata"
+                 ],
+    "title":  "ContactsWithChatsResponse"
+}

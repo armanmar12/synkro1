@@ -1,0 +1,53 @@
+{
+  "status": 200,
+  "data": {
+    "id": 84360463,
+    "name": "Dily",
+    "first_name": "",
+    "last_name": "",
+    "responsible_user_id": 13451338,
+    "group_id": 0,
+    "created_by": 0,
+    "updated_by": 0,
+    "created_at": 1771530047,
+    "updated_at": 1771530049,
+    "closest_task_at": null,
+    "is_deleted": false,
+    "is_unsorted": false,
+    "custom_fields_values": [
+      {
+        "field_id": 2721861,
+        "field_name": "Телефон",
+        "field_code": "PHONE",
+        "field_type": "multitext",
+        "values": [
+          {
+            "value": "+77077762076",
+            "enum_id": 5027033,
+            "enum_code": "WORK"
+          }
+        ]
+      }
+    ],
+    "account_id": 32878226,
+    "_links": {
+      "self": {
+        "href": "https://globalfruit.amocrm.ru/api/v4/contacts/84360463?with=leads&page=1&limit=250"
+      }
+    },
+    "_embedded": {
+      "tags": [],
+      "leads": [
+        {
+          "id": 50933247,
+          "_links": {
+            "self": {
+              "href": "https://globalfruit.amocrm.ru/api/v4/leads/50933247?with=leads&page=1&limit=250"
+            }
+          }
+        }
+      ],
+      "companies": []
+    }
+  }
+}

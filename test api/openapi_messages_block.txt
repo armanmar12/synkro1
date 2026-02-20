@@ -1,0 +1,261 @@
+﻿5428:                   "/companies/{company_id}/messaging/messages/":  {
+5429:                                                                       "get":  {
+5430:                                                                                   "tags":  [
+5431:                                                                                                "Messaging"
+5432:                                                                                            ],
+5433:                                                                                   "summary":  "Get Messages",
+5434:                                                                                   "operationId":  "MessagingGetMessages",
+5435:                                                                                   "security":  [
+5436:                                                                                                    {
+5437:                                                                                                        "APIKeyHeader":  [
+5438: 
+5439:                                                                                                                         ]
+5440:                                                                                                    },
+5441:                                                                                                    {
+5442:                                                                                                        "OAuth2PasswordBearer":  [
+5443: 
+5444:                                                                                                                                 ]
+5445:                                                                                                    }
+5446:                                                                                                ],
+5447:                                                                                   "parameters":  [
+5448:                                                                                                      {
+5449:                                                                                                          "name":  "company_id",
+5450:                                                                                                          "in":  "path",
+5451:                                                                                                          "required":  true,
+5452:                                                                                                          "schema":  {
+5453:                                                                                                                         "type":  "integer",
+5454:                                                                                                                         "maximum":  2147483647,
+5455:                                                                                                                         "minimum":  1,
+5456:                                                                                                                         "title":  "Company Id"
+5457:                                                                                                                     }
+5458:                                                                                                      },
+5459:                                                                                                      {
+5460:                                                                                                          "name":  "chat_id",
+5461:                                                                                                          "in":  "query",
+5462:                                                                                                          "required":  true,
+5463:                                                                                                          "schema":  {
+5464:                                                                                                                         "type":  "integer",
+5465:                                                                                                                         "maximum":  2147483647,
+5466:                                                                                                                         "minimum":  1,
+5467:                                                                                                                         "title":  "Chat Id"
+5468:                                                                                                                     }
+5469:                                                                                                      },
+5470:                                                                                                      {
+5471:                                                                                                          "name":  "limit",
+5472:                                                                                                          "in":  "query",
+5473:                                                                                                          "required":  false,
+5474:                                                                                                          "schema":  {
+5475:                                                                                                                         "type":  "integer",
+5476:                                                                                                                         "maximum":  100,
+5477:                                                                                                                         "minimum":  1,
+5478:                                                                                                                         "default":  50,
+5479:                                                                                                                         "title":  "Limit"
+5480:                                                                                                                     }
+5481:                                                                                                      },
+5482:                                                                                                      {
+5483:                                                                                                          "name":  "until",
+5484:                                                                                                          "in":  "query",
+5485:                                                                                                          "required":  false,
+5486:                                                                                                          "schema":  {
+5487:                                                                                                                         "anyOf":  [
+5488:                                                                                                                                       {
+5489:                                                                                                                                           "type":  "string",
+5490:                                                                                                                                           "format":  "date-time"
+5491:                                                                                                                                       },
+5492:                                                                                                                                       {
+5493:                                                                                                                                           "type":  "null"
+5494:                                                                                                                                       }
+5495:                                                                                                                                   ],
+5496:                                                                                                                         "title":  "Until"
+5497:                                                                                                                     }
+5498:                                                                                                      }
+5499:                                                                                                  ],
+5500:                                                                                   "responses":  {
+5501:                                                                                                     "200":  {
+5502:                                                                                                                 "description":  "Successful Response",
+5503:                                                                                                                 "content":  {
+5504:                                                                                                                                 "application/json":  {
+5505:                                                                                                                                                          "schema":  {
+5506:                                                                                                                                                                         "type":  "array",
+5507:                                                                                                                                                                         "items":  {
+5508:                                                                                                                                                                                       "$ref":  "#/components/schemas/Message"
+5509:                                                                                                                                                                                   },
+5510:                                                                                                                                                                         "title":  "Response Messaginggetmessages"
+5511:                                                                                                                                                                     }
+5512:                                                                                                                                                      }
+5513:                                                                                                                             }
+5514:                                                                                                             },
+5515:                                                                                                     "422":  {
+5516:                                                                                                                 "description":  "Validation Error",
+5517:                                                                                                                 "content":  {
+5518:                                                                                                                                 "application/json":  {
+5519:                                                                                                                                                          "schema":  {
+5520:                                                                                                                                                                         "$ref":  "#/components/schemas/HTTPValidationError"
+5521:                                                                                                                                                                     }
+5522:                                                                                                                                                      }
+5523:                                                                                                                             }
+5524:                                                                                                             }
+5525:                                                                                                 }
+5526:                                                                               },
+5527:                                                                       "post":  {
+5528:                                                                                    "tags":  [
+5529:                                                                                                 "Messaging"
+5530:                                                                                             ],
+5531:                                                                                    "summary":  "Send Message",
+5532:                                                                                    "operationId":  "MessagingSendMessage",
+5533:                                                                                    "security":  [
+5534:                                                                                                     {
+5535:                                                                                                         "APIKeyHeader":  [
+5536: 
+5537:                                                                                                                          ]
+5538:                                                                                                     },
+5539:                                                                                                     {
+5540:                                                                                                         "OAuth2PasswordBearer":  [
+5541: 
+5542:                                                                                                                                  ]
+5543:                                                                                                     }
+5544:                                                                                                 ],
+5545:                                                                                    "parameters":  [
+5546:                                                                                                       {
+5547:                                                                                                           "name":  "company_id",
+5548:                                                                                                           "in":  "path",
+5549:                                                                                                           "required":  true,
+5550:                                                                                                           "schema":  {
+5551:                                                                                                                          "type":  "integer",
+5552:                                                                                                                          "maximum":  2147483647,
+5553:                                                                                                                          "minimum":  1,
+5554:                                                                                                                          "title":  "Company Id"
+5555:                                                                                                                      }
+5556:                                                                                                       }
+5557:                                                                                                   ],
+5558:                                                                                    "requestBody":  {
+5559:                                                                                                        "required":  true,
+5560:                                                                                                        "content":  {
+5561:                                                                                                                        "application/json":  {
+5562:                                                                                                                                                 "schema":  {
+5563:                                                                                                                                                                "$ref":  "#/components/schemas/SendMessageRequest"
+5564:                                                                                                                                                            }
+5565:                                                                                                                                             }
+5566:                                                                                                                    }
+5567:                                                                                                    },
+5568:                                                                                    "responses":  {
+5569:                                                                                                      "200":  {
+5570:                                                                                                                  "description":  "Successful Response",
+5571:                                                                                                                  "content":  {
+5572:                                                                                                                                  "application/json":  {
+5573:                                                                                                                                                           "schema":  {
+5574:                                                                                                                                                                          "$ref":  "#/components/schemas/MessageSentResponse"
+5575:                                                                                                                                                                      }
+5576:                                                                                                                                                       }
+5577:                                                                                                                              }
+5578:                                                                                                              },
+5579:                                                                                                      "422":  {
+5580:                                                                                                                  "description":  "Validation Error",
+5581:                                                                                                                  "content":  {
+5582:                                                                                                                                  "application/json":  {
+5583:                                                                                                                                                           "schema":  {
+5584:                                                                                                                                                                          "$ref":  "#/components/schemas/HTTPValidationError"
+5585:                                                                                                                                                                      }
+5586:                                                                                                                                                       }
+5587:                                                                                                                              }
+5588:                                                                                                              }
+5589:                                                                                                  }
+5590:                                                                                }
+5591:                                                                   },
+5592:                   "/companies/{company_id}/messaging/chats/{connection_id}/{chat_id}/availability":  {
+5593:                                                                                                          "get":  {
+5594:                                                                                                                      "tags":  [
+5595:                                                                                                                                   "Messaging"
+5596:                                                                                                                               ],
+5597:                                                                                                                      "summary":  "Get Chat Availability",
+5598:                                                                                                                      "description":  "Check if messages could be sent to the chat. **Only for WABA**.\n\n`is_available` will be `true` if it\u0027s possible to send a free-form message to the chat.\n    This means that you\n    `\u0027have enough dialogs balance\u0027 AND (\u0027have auto templates enabled\u0027 OR \u0027have dialog session open\u0027).`\n\n`is_available` will be `false` otherwise\n\nTo find out why the chat is not available, check the following in order:\n1) Check `waba.dialogs_available`. If it\u0027s `false`, then you must top up your dialogs balance\n2) Check `waba.expires_at`. If it\u0027s in the past, then the dialog session has ended.\n    You must wait for an incoming message from the recipient or send a template message.\n3) Check `waba.auto_templates_enabled`. If it\u0027s `false`, then you must send a template message",
+5599:                                                                                                                      "operationId":  "MessagingGetChatAvailability",
+5600:                                                                                                                      "security":  [
+5601:                                                                                                                                       {
+5602:                                                                                                                                           "APIKeyHeader":  [
+5603: 
+5604:                                                                                                                                                            ]
+5605:                                                                                                                                       },
+5606:                                                                                                                                       {
+5607:                                                                                                                                           "OAuth2PasswordBearer":  [
+5608: 
+5609:                                                                                                                                                                    ]
+5610:                                                                                                                                       }
+5611:                                                                                                                                   ],
+5612:                                                                                                                      "parameters":  [
+5613:                                                                                                                                         {
+5614:                                                                                                                                             "name":  "company_id",
+5615:                                                                                                                                             "in":  "path",
+5616:                                                                                                                                             "required":  true,
+5617:                                                                                                                                             "schema":  {
+5618:                                                                                                                                                            "type":  "integer",
+5619:                                                                                                                                                            "maximum":  2147483647,
+5620:                                                                                                                                                            "minimum":  1,
+5621:                                                                                                                                                            "title":  "Company Id"
+5622:                                                                                                                                                        }
+5623:                                                                                                                                         },
+5624:                                                                                                                                         {
+5625:                                                                                                                                             "name":  "connection_id",
+5626:                                                                                                                                             "in":  "path",
+5627:                                                                                                                                             "required":  true,
+5628:                                                                                                                                             "schema":  {
+5629:                                                                                                                                                            "type":  "integer",
+5630:                                                                                                                                                            "maximum":  2147483647,
+5631:                                                                                                                                                            "minimum":  1,
+5632:                                                                                                                                                            "title":  "Connection Id"
+5633:                                                                                                                                                        }
+5634:                                                                                                                                         },
+5635:                                                                                                                                         {
+5636:                                                                                                                                             "name":  "chat_id",
+5637:                                                                                                                                             "in":  "path",
+5638:                                                                                                                                             "required":  true,
+5639:                                                                                                                                             "schema":  {
+5640:                                                                                                                                                            "type":  "integer",
+5641:                                                                                                                                                            "maximum":  2147483647,
+5642:                                                                                                                                                            "minimum":  1,
+5643:                                                                                                                                                            "title":  "Chat Id"
+5644:                                                                                                                                                        }
+5645:                                                                                                                                         }
+5646:                                                                                                                                     ],
+5647:                                                                                                                      "responses":  {
+5648:                                                                                                                                        "200":  {
+5649:                                                                                                                                                    "description":  "Successful Response",
+5650:                                                                                                                                                    "content":  {
+5651:                                                                                                                                                                    "application/json":  {
+5652:                                                                                                                                                                                             "schema":  {
+5653:                                                                                                                                                                                                            "$ref":  "#/components/schemas/ChatAvailability"
+5654:                                                                                                                                                                                                        }
+5655:                                                                                                                                                                                         }
+5656:                                                                                                                                                                }
+5657:                                                                                                                                                },
+5658:                                                                                                                                        "422":  {
+5659:                                                                                                                                                    "description":  "Validation Error",
+5660:                                                                                                                                                    "content":  {
+5661:                                                                                                                                                                    "application/json":  {
+5662:                                                                                                                                                                                             "schema":  {
+5663:                                                                                                                                                                                                            "$ref":  "#/components/schemas/HTTPValidationError"
+5664:                                                                                                                                                                                                        }
+5665:                                                                                                                                                                                         }
+5666:                                                                                                                                                                }
+5667:                                                                                                                                                }
+5668:                                                                                                                                    }
+5669:                                                                                                                  }
+5670:                                                                                                      },
+5671:                   "/companies/{company_id}/messaging/files/":  {
+5672:                                                                    "post":  {
+5673:                                                                                 "tags":  [
+5674:                                                                                              "Messaging"
+5675:                                                                                          ],
+5676:                                                                                 "summary":  "Upload File",
+5677:                                                                                 "description":  "Uploads a file to Radist to be used with messaging API later.\n\nMax file size: **100MB**\n\nYou can specify desired file name in the `filename` field of multipart request.",
+5678:                                                                                 "operationId":  "MessagingUploadFile",
+5679:                                                                                 "security":  [
+5680:                                                                                                  {
+5681:                                                                                                      "APIKeyHeader":  [
+5682: 
+5683:                                                                                                                       ]
+5684:                                                                                                  },
+5685:                                                                                                  {
+5686:                                                                                                      "OAuth2PasswordBearer":  [
+5687: 
+5688:                                                                                                                               ]

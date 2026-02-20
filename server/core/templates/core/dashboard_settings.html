@@ -1,0 +1,246 @@
+﻿{% extends "core/base.html" %}
+{% block title %}Synkro - Настройки{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="section-title">
+      <h3>Мастер настроек</h3>
+      <span class="pill">Только для администратора</span>
+    </div>
+    <p class="muted">Здесь будет поэтапная настройка Supabase → amoCRM → Radist → AI → Telegram.</p>
+  </div>
+
+  {% if not can_manage_settings %}
+    <div class="card">
+      <p class="pill">Нет доступа к настройкам. Войдите под админом клиента.</p>
+    </div>
+  {% endif %}
+
+  {% if message %}
+    <div class="card">
+      <p class="pill">{{ message }}</p>
+    </div>
+  {% endif %}
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Supabase</h3>
+      <p class="muted">URL и ключи. Проверка подключения.</p>
+      {% if tenants %}
+        <form method="get" class="form-row">
+          <label>Tenant</label>
+          <select name="tenant" class="input">
+            {% for t in tenants %}
+              <option value="{{ t.id }}" {% if tenant and t.id == tenant.id %}selected{% endif %}>{{ t.name }} ({{ t.slug }})</option>
+            {% endfor %}
+          </select>
+          <button class="btn" type="submit">Выбрать</button>
+        </form>
+      {% else %}
+        <p class="muted">Нет tenant'ов. Создайте первый в админке.</p>
+      {% endif %}
+
+      {% if tenant and can_manage_settings %}
+        <div class="status-row">
+          <div class="status-dot {% if supabase_status == 'ok' %}ok{% endif %}"></div>
+          <span class="muted">Статус: {{ supabase_status }}</span>
+          {% if supabase_last_error %}
+            <span class="muted">Ошибка: {{ supabase_last_error }}</span>
+          {% endif %}
+        </div>
+
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <div>
+            <label>{{ supabase_form.supabase_url.label }}</label>
+            {{ supabase_form.supabase_url }}
+            {% if supabase_form.supabase_url.errors %}<div class="muted">{{ supabase_form.supabase_url.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ supabase_form.supabase_anon_key.label }}</label>
+            {{ supabase_form.supabase_anon_key }}
+            {% if supabase_form.supabase_anon_key.errors %}<div class="muted">{{ supabase_form.supabase_anon_key.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ supabase_form.supabase_service_role_key.label }}</label>
+            {{ supabase_form.supabase_service_role_key }}
+            <div class="muted">
+              {% if has_secret_supabase %}Ключ уже сохранён. {% endif %}
+              {{ supabase_form.supabase_service_role_key.help_text }}
+            </div>
+            {% if supabase_form.supabase_service_role_key.errors %}<div class="muted">{{ supabase_form.supabase_service_role_key.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit" name="action" value="save_supabase">Сохранить</button>
+            <button class="btn btn-secondary" type="submit" name="action" value="check_supabase">Проверить</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>amoCRM</h3>
+      <p class="muted">Инструкция + callback URL. Тестовые 3 диалога.</p>
+      {% if tenant and can_manage_settings %}
+        <div class="status-row">
+          <div class="status-dot {% if amocrm_status == 'ok' %}ok{% endif %}"></div>
+          <span class="muted">Статус: {{ amocrm_status }}</span>
+          {% if amocrm_last_error %}
+            <span class="muted">Ошибка: {{ amocrm_last_error }}</span>
+          {% endif %}
+        </div>
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <div>
+            <label>{{ amocrm_form.domain.label }}</label>
+            {{ amocrm_form.domain }}
+            {% if amocrm_form.domain.errors %}<div class="muted">{{ amocrm_form.domain.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ amocrm_form.access_token.label }}</label>
+            {{ amocrm_form.access_token }}
+            <div class="muted">
+              {% if has_secret_amocrm %}Секреты уже сохранены. {% endif %}
+              {{ amocrm_form.access_token.help_text }}
+            </div>
+            {% if amocrm_form.access_token.errors %}<div class="muted">{{ amocrm_form.access_token.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ amocrm_form.client_id.label }}</label>
+            {{ amocrm_form.client_id }}
+            {% if amocrm_form.client_id.errors %}<div class="muted">{{ amocrm_form.client_id.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ amocrm_form.client_secret.label }}</label>
+            {{ amocrm_form.client_secret }}
+            {% if amocrm_form.client_secret.errors %}<div class="muted">{{ amocrm_form.client_secret.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ amocrm_form.refresh_token.label }}</label>
+            {{ amocrm_form.refresh_token }}
+            <div class="muted">
+              {{ amocrm_form.refresh_token.help_text }}
+            </div>
+            {% if amocrm_form.refresh_token.errors %}<div class="muted">{{ amocrm_form.refresh_token.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit" name="action" value="save_amocrm">Сохранить</button>
+            <button class="btn btn-secondary" type="submit" name="action" value="check_amocrm">Проверить</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Radist</h3>
+      <p class="muted">API ключ. Проверка диалогов.</p>
+      {% if tenant and can_manage_settings %}
+        <div class="status-row">
+          <div class="status-dot {% if radist_status == 'ok' %}ok{% endif %}"></div>
+          <span class="muted">Статус: {{ radist_status }}</span>
+          {% if radist_last_error %}
+            <span class="muted">Ошибка: {{ radist_last_error }}</span>
+          {% endif %}
+        </div>
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <div>
+            <label>{{ radist_form.api_base_url.label }}</label>
+            {{ radist_form.api_base_url }}
+            {% if radist_form.api_base_url.errors %}<div class="muted">{{ radist_form.api_base_url.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ radist_form.company_id.label }}</label>
+            {{ radist_form.company_id }}
+            {% if radist_form.company_id.errors %}<div class="muted">{{ radist_form.company_id.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ radist_form.api_key.label }}</label>
+            {{ radist_form.api_key }}
+            {% if radist_form.api_key.errors %}<div class="muted">{{ radist_form.api_key.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit" name="action" value="save_radist">Сохранить</button>
+            <button class="btn btn-secondary" type="submit" name="action" value="check_radist">Проверить</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>AI</h3>
+      <p class="muted">Ключ, модель, промпт, тест-анализ.</p>
+      {% if tenant and can_manage_settings %}
+        <div class="status-row">
+          <div class="status-dot {% if ai_status == 'ok' %}ok{% endif %}"></div>
+          <span class="muted">Статус: {{ ai_status }}</span>
+          {% if ai_last_error %}
+            <span class="muted">Ошибка: {{ ai_last_error }}</span>
+          {% endif %}
+        </div>
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <div>
+            <label>{{ ai_form.provider.label }}</label>
+            {{ ai_form.provider }}
+            {% if ai_form.provider.errors %}<div class="muted">{{ ai_form.provider.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ ai_form.model.label }}</label>
+            {{ ai_form.model }}
+            {% if ai_form.model.errors %}<div class="muted">{{ ai_form.model.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ ai_form.api_key.label }}</label>
+            {{ ai_form.api_key }}
+            {% if ai_form.api_key.errors %}<div class="muted">{{ ai_form.api_key.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ ai_form.prompt.label }}</label>
+            {{ ai_form.prompt }}
+            {% if ai_form.prompt.errors %}<div class="muted">{{ ai_form.prompt.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit" name="action" value="save_ai">Сохранить</button>
+            <button class="btn btn-secondary" type="submit" name="action" value="check_ai">Проверить</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Telegram</h3>
+      <p class="muted">Токен бота и chat_id.</p>
+      {% if tenant and can_manage_settings %}
+        <div class="status-row">
+          <div class="status-dot {% if telegram_status == 'ok' %}ok{% endif %}"></div>
+          <span class="muted">Статус: {{ telegram_status }}</span>
+          {% if telegram_last_error %}
+            <span class="muted">Ошибка: {{ telegram_last_error }}</span>
+          {% endif %}
+        </div>
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <div>
+            <label>{{ telegram_form.bot_token.label }}</label>
+            {{ telegram_form.bot_token }}
+            {% if telegram_form.bot_token.errors %}<div class="muted">{{ telegram_form.bot_token.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ telegram_form.chat_id.label }}</label>
+            {{ telegram_form.chat_id }}
+            {% if telegram_form.chat_id.errors %}<div class="muted">{{ telegram_form.chat_id.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit" name="action" value="save_telegram">Сохранить</button>
+            <button class="btn btn-secondary" type="submit" name="action" value="check_telegram">Проверить</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

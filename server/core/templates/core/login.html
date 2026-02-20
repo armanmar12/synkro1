@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Synkro - Вход</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="container">
+        <div class="card login-wrap">
+          <h3>Вход в Synkro</h3>
+          <p class="muted">Доступ выдаётся администратором.</p>
+          {% if error %}
+            <p style="color:#ff8a8a; margin-top:12px;">{{ error }}</p>
+          {% endif %}
+          <form method="post" style="display: grid; gap: 12px; margin-top: 16px;">
+            {% csrf_token %}
+            <input class="input" name="username" placeholder="Логин" />
+            <input class="input" name="password" placeholder="Пароль" type="password" />
+            <button class="btn" type="submit">Войти</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

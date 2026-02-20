@@ -1,0 +1,243 @@
+{
+  "status": 200,
+  "data": {
+    "_total_items": 1,
+    "_links": {
+      "self": {
+        "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines"
+      }
+    },
+    "_embedded": {
+      "pipelines": [
+        {
+          "id": 10539854,
+          "name": "Воронка",
+          "sort": 1,
+          "is_main": true,
+          "is_unsorted_on": false,
+          "is_archive": false,
+          "account_id": 32878226,
+          "_links": {
+            "self": {
+              "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854"
+            }
+          },
+          "_embedded": {
+            "statuses": [
+              {
+                "id": 83155538,
+                "name": "Неразобранное",
+                "sort": 10,
+                "is_editable": false,
+                "pipeline_id": 10539854,
+                "color": "#c1c1c1",
+                "type": 1,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83155538"
+                  }
+                }
+              },
+              {
+                "id": 83233682,
+                "name": "новые обращения",
+                "sort": 10,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#99ccff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83233682"
+                  }
+                }
+              },
+              {
+                "id": 83171258,
+                "name": "бот: прайс отправлен",
+                "sort": 20,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#98cbff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83171258"
+                  }
+                }
+              },
+              {
+                "id": 83425582,
+                "name": "открыт менеджером",
+                "sort": 30,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#99ccff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83425582"
+                  }
+                }
+              },
+              {
+                "id": 83155542,
+                "name": "в диалоге",
+                "sort": 40,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#ffc8c8",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83155542"
+                  }
+                }
+              },
+              {
+                "id": 83426274,
+                "name": "молчун",
+                "sort": 50,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#fffeb2",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83426274"
+                  }
+                }
+              },
+              {
+                "id": 83473182,
+                "name": "ПРОСНУЛСЯ",
+                "sort": 60,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#99ccff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83473182"
+                  }
+                }
+              },
+              {
+                "id": 83426134,
+                "name": "активная сборка",
+                "sort": 70,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#87f2c0",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83426134"
+                  }
+                }
+              },
+              {
+                "id": 83426138,
+                "name": "на оплате",
+                "sort": 80,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#ff8f92",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83426138"
+                  }
+                }
+              },
+              {
+                "id": 83155546,
+                "name": "на доставке",
+                "sort": 90,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#eb93ff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83155546"
+                  }
+                }
+              },
+              {
+                "id": 83416562,
+                "name": "Спросить как доставка",
+                "sort": 100,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#99ccff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83416562"
+                  }
+                }
+              },
+              {
+                "id": 83489642,
+                "name": "претензия",
+                "sort": 110,
+                "is_editable": true,
+                "pipeline_id": 10539854,
+                "color": "#99ccff",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/83489642"
+                  }
+                }
+              },
+              {
+                "id": 142,
+                "name": "Успешно реализовано",
+                "sort": 10000,
+                "is_editable": false,
+                "pipeline_id": 10539854,
+                "color": "#CCFF66",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/142"
+                  }
+                }
+              },
+              {
+                "id": 143,
+                "name": "Закрыто и не реализовано",
+                "sort": 11000,
+                "is_editable": false,
+                "pipeline_id": 10539854,
+                "color": "#D5D8DB",
+                "type": 0,
+                "account_id": 32878226,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/pipelines/10539854/statuses/143"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

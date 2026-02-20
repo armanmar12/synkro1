@@ -1,0 +1,247 @@
+{
+  "domain": "globalfruit.amocrm.ru",
+  "ts": 1771532411,
+  "leads": [
+    {
+      "lead_id": 50882589,
+      "calls": {
+        "lead": {
+          "status": 200,
+          "path": "/api/v4/leads/50882589?with=contacts",
+          "out": "lead_50882589.json"
+        },
+        "lead_notes": {
+          "status": 204,
+          "path": "/api/v4/leads/50882589/notes?limit=50",
+          "out": "lead_50882589_notes.json"
+        },
+        "lead_talks": {
+          "status": 200,
+          "path": "/api/v4/talks?filter[entity_type]=lead&filter[entity_id]=50882589&limit=10",
+          "out": "lead_50882589_talks.json"
+        },
+        "talk_messages": {
+          "status": 403,
+          "path": "/api/v4/talks/3430/messages?limit=50",
+          "out": "talk_3430_messages.json"
+        },
+        "lead_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/leads/50882589/chats?limit=50",
+          "out": "lead_50882589_chats_guess.json"
+        },
+        "contact_84317873": {
+          "status": 200,
+          "path": "/api/v4/contacts/84317873?with=leads",
+          "out": "contact_84317873.json"
+        },
+        "contact_84317873_notes": {
+          "status": 204,
+          "path": "/api/v4/contacts/84317873/notes?limit=50",
+          "out": "contact_84317873_notes.json"
+        },
+        "contact_84317873_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/contacts/84317873/chats?limit=50",
+          "out": "contact_84317873_chats_guess.json"
+        }
+      },
+      "contact_ids": [
+        84317873
+      ]
+    },
+    {
+      "lead_id": 50882773,
+      "calls": {
+        "lead": {
+          "status": 200,
+          "path": "/api/v4/leads/50882773?with=contacts",
+          "out": "lead_50882773.json"
+        },
+        "lead_notes": {
+          "status": 204,
+          "path": "/api/v4/leads/50882773/notes?limit=50",
+          "out": "lead_50882773_notes.json"
+        },
+        "lead_talks": {
+          "status": 200,
+          "path": "/api/v4/talks?filter[entity_type]=lead&filter[entity_id]=50882773&limit=10",
+          "out": "lead_50882773_talks.json"
+        },
+        "talk_messages": {
+          "status": 403,
+          "path": "/api/v4/talks/3431/messages?limit=50",
+          "out": "talk_3431_messages.json"
+        },
+        "lead_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/leads/50882773/chats?limit=50",
+          "out": "lead_50882773_chats_guess.json"
+        },
+        "contact_84318031": {
+          "status": 200,
+          "path": "/api/v4/contacts/84318031?with=leads",
+          "out": "contact_84318031.json"
+        },
+        "contact_84318031_notes": {
+          "status": 204,
+          "path": "/api/v4/contacts/84318031/notes?limit=50",
+          "out": "contact_84318031_notes.json"
+        },
+        "contact_84318031_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/contacts/84318031/chats?limit=50",
+          "out": "contact_84318031_chats_guess.json"
+        }
+      },
+      "contact_ids": [
+        84318031
+      ]
+    },
+    {
+      "lead_id": 50882869,
+      "calls": {
+        "lead": {
+          "status": 200,
+          "path": "/api/v4/leads/50882869?with=contacts",
+          "out": "lead_50882869.json"
+        },
+        "lead_notes": {
+          "status": 204,
+          "path": "/api/v4/leads/50882869/notes?limit=50",
+          "out": "lead_50882869_notes.json"
+        },
+        "lead_talks": {
+          "status": 200,
+          "path": "/api/v4/talks?filter[entity_type]=lead&filter[entity_id]=50882869&limit=10",
+          "out": "lead_50882869_talks.json"
+        },
+        "talk_messages": {
+          "status": 403,
+          "path": "/api/v4/talks/3432/messages?limit=50",
+          "out": "talk_3432_messages.json"
+        },
+        "lead_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/leads/50882869/chats?limit=50",
+          "out": "lead_50882869_chats_guess.json"
+        },
+        "contact_84318095": {
+          "status": 200,
+          "path": "/api/v4/contacts/84318095?with=leads",
+          "out": "contact_84318095.json"
+        },
+        "contact_84318095_notes": {
+          "status": 204,
+          "path": "/api/v4/contacts/84318095/notes?limit=50",
+          "out": "contact_84318095_notes.json"
+        },
+        "contact_84318095_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/contacts/84318095/chats?limit=50",
+          "out": "contact_84318095_chats_guess.json"
+        }
+      },
+      "contact_ids": [
+        84318095
+      ]
+    },
+    {
+      "lead_id": 50933405,
+      "calls": {
+        "lead": {
+          "status": 200,
+          "path": "/api/v4/leads/50933405?with=contacts",
+          "out": "lead_50933405.json"
+        },
+        "lead_notes": {
+          "status": 204,
+          "path": "/api/v4/leads/50933405/notes?limit=50",
+          "out": "lead_50933405_notes.json"
+        },
+        "lead_talks": {
+          "status": 200,
+          "path": "/api/v4/talks?filter[entity_type]=lead&filter[entity_id]=50933405&limit=10",
+          "out": "lead_50933405_talks.json"
+        },
+        "talk_messages": {
+          "status": 403,
+          "path": "/api/v4/talks/3728/messages?limit=50",
+          "out": "talk_3728_messages.json"
+        },
+        "lead_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/leads/50933405/chats?limit=50",
+          "out": "lead_50933405_chats_guess.json"
+        },
+        "contact_84360603": {
+          "status": 200,
+          "path": "/api/v4/contacts/84360603?with=leads",
+          "out": "contact_84360603.json"
+        },
+        "contact_84360603_notes": {
+          "status": 204,
+          "path": "/api/v4/contacts/84360603/notes?limit=50",
+          "out": "contact_84360603_notes.json"
+        },
+        "contact_84360603_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/contacts/84360603/chats?limit=50",
+          "out": "contact_84360603_chats_guess.json"
+        }
+      },
+      "contact_ids": [
+        84360603
+      ]
+    },
+    {
+      "lead_id": 50933247,
+      "calls": {
+        "lead": {
+          "status": 200,
+          "path": "/api/v4/leads/50933247?with=contacts",
+          "out": "lead_50933247.json"
+        },
+        "lead_notes": {
+          "status": 204,
+          "path": "/api/v4/leads/50933247/notes?limit=50",
+          "out": "lead_50933247_notes.json"
+        },
+        "lead_talks": {
+          "status": 200,
+          "path": "/api/v4/talks?filter[entity_type]=lead&filter[entity_id]=50933247&limit=10",
+          "out": "lead_50933247_talks.json"
+        },
+        "talk_messages": {
+          "status": 403,
+          "path": "/api/v4/talks/3727/messages?limit=50",
+          "out": "talk_3727_messages.json"
+        },
+        "lead_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/leads/50933247/chats?limit=50",
+          "out": "lead_50933247_chats_guess.json"
+        },
+        "contact_84360463": {
+          "status": 200,
+          "path": "/api/v4/contacts/84360463?with=leads",
+          "out": "contact_84360463.json"
+        },
+        "contact_84360463_notes": {
+          "status": 204,
+          "path": "/api/v4/contacts/84360463/notes?limit=50",
+          "out": "contact_84360463_notes.json"
+        },
+        "contact_84360463_chats_guess": {
+          "status": 404,
+          "path": "/api/v4/contacts/84360463/chats?limit=50",
+          "out": "contact_84360463_chats_guess.json"
+        }
+      },
+      "contact_ids": [
+        84360463
+      ]
+    }
+  ],
+  "chats_root_status": 404
+}

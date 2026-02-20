@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "data": {
+    "_total_items": 1,
+    "_embedded": {
+      "talks": [
+        {
+          "talk_id": 3430,
+          "created_at": 1771434010,
+          "updated_at": 1771434015,
+          "rate": 0,
+          "contact_id": 84317873,
+          "chat_id": "47763d85-5250-406b-81f6-fbe313b50ebe",
+          "entity_id": 50882589,
+          "entity_type": "lead",
+          "status": "in_work",
+          "is_in_work": true,
+          "is_read": false,
+          "origin": "ru.whatsapp.radist",
+          "source_id": 23486913,
+          "account_id": 32878226,
+          "_links": {
+            "self": {
+              "href": "https://globalfruit.amocrm.ru/api/v4/talks/3430?filter%5Bentity_type%5D=lead&filter%5Bentity_id%5D=50882589&limit=10&page=1"
+            }
+          },
+          "_embedded": {
+            "contacts": [
+              {
+                "id": 84317873,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/contacts/84317873?filter%5Bentity_type%5D=lead&filter%5Bentity_id%5D=50882589&limit=10&page=1"
+                  }
+                }
+              }
+            ],
+            "leads": [
+              {
+                "id": 50882589,
+                "_links": {
+                  "self": {
+                    "href": "https://globalfruit.amocrm.ru/api/v4/leads/50882589?filter%5Bentity_type%5D=lead&filter%5Bentity_id%5D=50882589&limit=10&page=1"
+                  }
+                }
+              }
+            ],
+            "customers": []
+          }
+        }
+      ]
+    }
+  }
+}

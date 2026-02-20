@@ -1,0 +1,13 @@
+﻿{
+    "local_date":  "2026-02-18",
+    "timezone_offset":  "+05:00",
+    "window_start_local":  "2026-02-18T00:00:00.0000000+05:00",
+    "window_end_local":  "2026-02-18T23:59:59.9990000+05:00",
+    "window_start_utc":  "2026-02-17T19:00:00.0000000Z",
+    "window_end_utc":  "2026-02-18T18:59:59.9990000Z",
+    "dialogs_count":  259,
+    "unique_phones":  259,
+    "messages_count":  2140,
+    "inbound_count":  643,
+    "outbound_count":  1497
+}

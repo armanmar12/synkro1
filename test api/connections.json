@@ -1,0 +1,91 @@
+﻿{
+    "count":  4,
+    "connections":  [
+                        {
+                            "id":  80235,
+                            "name":  "global1",
+                            "radist_token":  "03793706-6e95-4444-be64-b7519e38f786",
+                            "last_status":  {
+                                                "status_type":  "bad",
+                                                "status_subtype":  "whatsapp_qr_not_scanned"
+                                            },
+                            "integrations":  [
+                                                 44412
+                                             ],
+                            "subscription_id":  16113,
+                            "subscription":  {
+                                                 "id":  16113,
+                                                 "paid_until":  "2026-02-12T18:33:17.166559Z",
+                                                 "subscription_plan":  "STANDARD"
+                                             },
+                            "type":  "whatsapp",
+                            "params":  {
+                                           "phone":  "+77780878211",
+                                           "qr_url":  "https://services.radist.online/whatsapp/qr/Y6bWm2PmG3KA",
+                                           "group_chats_enabled":  false
+                                       }
+                        },
+                        {
+                            "id":  80236,
+                            "name":  "",
+                            "radist_token":  "3540093e-22ba-4c1e-823a-555b1dc9f825",
+                            "last_status":  null,
+                            "integrations":  [
+                                                 44412
+                                             ],
+                            "subscription_id":  null,
+                            "subscription":  null,
+                            "type":  "amocrm",
+                            "params":  {
+                                           "domain":  "globalfruit.amocrm.ru",
+                                           "account_id":  "32878226",
+                                           "client_uuid":  "b5d97763-dd65-40f4-aaa4-8feb661707b7",
+                                           "widget_code":  "amo_whatsapp_radist_online"
+                                       }
+                        },
+                        {
+                            "id":  80859,
+                            "name":  "Global Fruit - ÐÐ Canele (+77780878211)",
+                            "radist_token":  "74222a12-dbdf-4b0c-a61c-a7ede830c99c",
+                            "last_status":  {
+                                                "status_type":  "good",
+                                                "status_subtype":  "normal"
+                                            },
+                            "integrations":  [
+                                                 44697
+                                             ],
+                            "subscription_id":  16281,
+                            "subscription":  {
+                                                 "id":  16281,
+                                                 "paid_until":  "2026-03-12T19:35:23.763356Z",
+                                                 "subscription_plan":  "STANDARD"
+                                             },
+                            "type":  "waba",
+                            "params":  {
+                                           "phone":  "+77780878211",
+                                           "facebook_business_id":  1419694602843099,
+                                           "waba_business_id":  718885637825390,
+                                           "facebook_catalog_enabled":  false,
+                                           "waba_auto_templates_enabled":  false
+                                       }
+                        },
+                        {
+                            "id":  80867,
+                            "name":  "",
+                            "radist_token":  "3f0ffed4-915b-4a85-bdb6-91dbd3f85e42",
+                            "last_status":  null,
+                            "integrations":  [
+                                                 44697
+                                             ],
+                            "subscription_id":  null,
+                            "subscription":  null,
+                            "type":  "amocrm",
+                            "params":  {
+                                           "domain":  "globalfruit.amocrm.ru",
+                                           "account_id":  "32878226",
+                                           "client_uuid":  "e96d3957-6c78-4897-90ed-83ce5803ea37",
+                                           "widget_code":  "radist_whatsapp"
+                                       }
+                        }
+                    ]
+}

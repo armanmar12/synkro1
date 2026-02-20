@@ -1,0 +1,41 @@
+{% extends "core/base.html" %}
+{% block title %}Synkro - Профиль{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="section-title">
+      <h3>Профиль пользователя</h3>
+      <span class="pill">Личные данные</span>
+    </div>
+    <p class="muted">Здесь можно изменить только email, телефон и часовой пояс.</p>
+  </div>
+
+  {% if message %}
+    <div class="card">
+      <p class="pill">{{ message }}</p>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <form method="post" class="form-grid">
+      {% csrf_token %}
+      <div>
+        <label>{{ form.email.label }}</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="muted">{{ form.email.errors }}</div>{% endif %}
+      </div>
+      <div>
+        <label>{{ form.phone.label }}</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}<div class="muted">{{ form.phone.errors }}</div>{% endif %}
+      </div>
+      <div>
+        <label>{{ form.timezone.label }}</label>
+        {{ form.timezone }}
+        {% if form.timezone.errors %}<div class="muted">{{ form.timezone.errors }}</div>{% endif %}
+      </div>
+      <div class="form-actions">
+        <button class="btn" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}

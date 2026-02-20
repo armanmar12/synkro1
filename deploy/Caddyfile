@@ -1,0 +1,9 @@
+{
+  email you@example.com
+}
+
+vds28824.vpsza500.kz {
+  encode gzip
+  reverse_proxy web:8000
+}
+

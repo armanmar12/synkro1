@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% block title %}Synkro - Отчеты{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="section-title">
+      <h3>Отчеты</h3>
+      <button class="btn">Принудительный отчет</button>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Тип</th>
+          <th>Комментарий</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="muted">—</td>
+          <td class="muted">—</td>
+          <td class="muted">—</td>
+          <td class="muted">Нет данных</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

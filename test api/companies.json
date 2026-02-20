@@ -1,0 +1,16 @@
+﻿{
+    "count":  1,
+    "companies":  [
+                      {
+                          "id":  205113,
+                          "name":  "GlobalFruit",
+                          "owner_id":  55711,
+                          "payments_locked":  false,
+                          "timezone":  "Asia/Oral",
+                          "payment_currency":  "RUB",
+                          "waba_360dialog_partner_id":  "4xX6E3PA",
+                          "had_connections":  true,
+                          "is_partner":  false
+                      }
+                  ]
+}

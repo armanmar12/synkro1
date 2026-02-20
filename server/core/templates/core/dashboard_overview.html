@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% block title %}Synkro - Обзор{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="section-title">
+      <h3>Общая статистика</h3>
+      <span class="pill">UTC+5</span>
+    </div>
+    <p class="muted">Пока пусто. Здесь появятся ключевые метрики и статус интеграций.</p>
+    <div class="status-row">
+      <div class="status-dot ok"></div>
+      <div class="status-dot ok"></div>
+      <div class="status-dot"></div>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Последние отчеты</h3>
+      <p class="muted">Список появится после первых запусков анализа.</p>
+    </div>
+    <div class="card">
+      <h3>Состояние пайплайна</h3>
+      <p class="muted">Отображаем текущий шаг и время выполнения.</p>
+    </div>
+  </div>
+{% endblock %}

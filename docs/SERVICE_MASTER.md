@@ -13,16 +13,18 @@ Synkro - веб-сервис для B2B-аналитики клиентских 
 - кабинет пользователя;
 - управление интеграциями;
 - хранение конфигов и ролей;
-- основу для отчетного пайплайна.
+- production-пайплайн отчетов с Celery/Redis.
 
 Ключевой инвариант:
 - amoCRM только read-only.
 
 ## 3. Что уже есть в коде
 - Django-проект и UI-страницы (`login`, `dashboard`, `reports`, `profile`, `settings`).
-- Центральные модели данных (`Tenant`, `UserRole`, `IntegrationConfig`, `JobRun`, `Report`, `ReportMessage`, `AuditLog`).
+- Центральные модели данных (`Tenant`, `UserRole`, `IntegrationConfig`, `TenantRuntimeConfig`, `JobRun`, `JobRunEvent`, `Report`, `ReportMessage`, `AuditLog`).
 - Формы и проверки подключений внешних интеграций из UI.
 - Docker-окружение для web/worker/beat/db/redis/caddy.
+- Реальный runtime-пайплайн с режимами `amocrm_radist`, `radist_only`, `amocrm_only`.
+- Лог шагов запуска и ошибок в UI отчетов для ручного/планового прогона.
 
 ## 4. Что сейчас считать ядром репозитория
 - `server/`

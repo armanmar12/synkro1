@@ -21,6 +21,8 @@
 - `server/`
   - Django-проект (`synkro`) и приложение (`core`)
   - модели, вьюхи, формы, шаблоны, статика, миграции
+  - production pipeline: `core/pipeline.py`, `core/tasks.py`, `core/connectors.py`
+  - runtime-наблюдаемость запусков: `JobRun` + `JobRunEvent` (модели/админка/UI)
 - `deploy/`
   - `entrypoint.sh` (migrate + collectstatic + gunicorn)
   - `Caddyfile` (reverse proxy/TLS)

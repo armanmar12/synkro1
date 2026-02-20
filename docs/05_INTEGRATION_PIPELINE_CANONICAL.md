@@ -25,6 +25,12 @@
 7. После AI-анализа отчет сохраняется в `reports`.
 8. Follow-up уточнения пользователя: максимум 2, пока в веб-интерфейсе.
 
+## 2.1 Режимы runtime-пайплайна
+- `amocrm_radist`: полный контур amoCRM + Radist + Supabase + AI + Telegram.
+- `radist_only`: загрузка диалогов из Radist, фильтрация по рабочим суткам tenant, запись в Supabase, затем AI + Telegram.
+- `amocrm_only`: отчет только по данным amoCRM (без анализа диалогов Radist).
+- Режим задается tenant-настройкой `TenantRuntimeConfig.mode`.
+
 ## 3. Таблицы Supabase (фактическая схема)
 Источник: `supabase/migrations/001_init.sql`
 
@@ -141,4 +147,3 @@
 1. Этот документ.
 2. `supabase/migrations/001_init.sql`.
 3. Реальное поведение production-кода.
-

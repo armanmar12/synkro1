@@ -1,9 +1,0 @@
-{
-  "status": 403,
-  "data": {
-    "title": "Forbidden",
-    "type": "https://httpstatus.es/403",
-    "status": 403,
-    "detail": "Invalid scope"
-  }
-}

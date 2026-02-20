@@ -9,10 +9,10 @@ param(
     [switch]$DebugHttp,
 
     [Parameter(Mandatory = $false)]
-    [string]$DialogsPath = "test api/radist_amo_match/dialogs.json",
+    [string]$DialogsPath = "temp/research/test api/radist_amo_match/dialogs.json",
 
     [Parameter(Mandatory = $false)]
-    [string]$PipelinesPath = "amo testapi/pipelines.json",
+    [string]$PipelinesPath = "temp/research/amo testapi/pipelines.json",
 
     [Parameter(Mandatory = $false)]
     [int]$LocalUtcOffsetHours = 5

@@ -13,3 +13,5 @@ venv/
 server/db.sqlite3
 amo testapi/tokens.json
 amo testapi/*.log
+temp/**
+!temp/.gitkeep

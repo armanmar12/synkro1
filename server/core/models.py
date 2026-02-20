@@ -1,3 +1,5 @@
+from datetime import time
+
 from django.conf import settings
 from django.db import models
 
@@ -93,6 +95,34 @@ class IntegrationConfig(models.Model):
         return f"{self.tenant.slug}: {self.kind}"
 
 
+class TenantRuntimeConfig(models.Model):
+    class Mode(models.TextChoices):
+        AMOCRM_RADIST = "amocrm_radist", "amoCRM + Radist"
+        RADIST_ONLY = "radist_only", "Radist only"
+        AMOCRM_ONLY = "amocrm_only", "amoCRM only"
+
+    tenant = models.OneToOneField(Tenant, on_delete=models.CASCADE, related_name="runtime_config")
+    mode = models.CharField(max_length=24, choices=Mode.choices, default=Mode.AMOCRM_RADIST)
+    timezone = models.CharField(max_length=64, default=getattr(settings, "TIME_ZONE", "UTC"))
+    business_day_start = models.TimeField(default=time(22, 1))
+    scheduled_run_time = models.TimeField(default=time(22, 10))
+    is_schedule_enabled = models.BooleanField(default=True)
+    radist_fetch_limit = models.PositiveIntegerField(default=200)
+    min_dialogs_for_report = models.PositiveIntegerField(default=1)
+    max_force_lookback_days = models.PositiveSmallIntegerField(default=3)
+    max_force_window_hours = models.PositiveSmallIntegerField(default=24)
+    telegram_followup_minutes = models.PositiveSmallIntegerField(default=60)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["tenant_id"]
+
+    def __str__(self) -> str:
+        return f"{self.tenant.slug}: {self.mode}"
+
+
 class JobRun(models.Model):
     class JobType(models.TextChoices):
         PIPELINE = "pipeline", "Pipeline"
@@ -108,12 +138,37 @@ class JobRun(models.Model):
         SUCCESS = "success", "Success"
         FAILED = "failed", "Failed"
 
+    class TriggerType(models.TextChoices):
+        SCHEDULED = "scheduled", "Scheduled"
+        MANUAL = "manual", "Manual"
+        SYSTEM = "system", "System"
+
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     job_type = models.CharField(max_length=30, choices=JobType.choices)
+    mode = models.CharField(
+        max_length=24,
+        choices=TenantRuntimeConfig.Mode.choices,
+        default=TenantRuntimeConfig.Mode.AMOCRM_RADIST,
+    )
+    trigger_type = models.CharField(
+        max_length=20, choices=TriggerType.choices, default=TriggerType.SYSTEM
+    )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     current_step = models.CharField(max_length=120, blank=True)
     progress = models.PositiveSmallIntegerField(default=0)
     error = models.TextField(blank=True)
+    window_start = models.DateTimeField(null=True, blank=True)
+    window_end = models.DateTimeField(null=True, blank=True)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_job_runs",
+    )
+    idempotency_key = models.CharField(max_length=160, null=True, blank=True, unique=True)
+    attempt = models.PositiveSmallIntegerField(default=1)
+    metadata = models.JSONField(default=dict, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -134,6 +189,9 @@ class Report(models.Model):
         FAILED = "failed", "Failed"
 
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+    job_run = models.ForeignKey(
+        JobRun, on_delete=models.SET_NULL, null=True, blank=True, related_name="reports"
+    )
     period_start = models.DateField()
     period_end = models.DateField()
     report_type = models.CharField(max_length=40, default="daily")
@@ -141,6 +199,9 @@ class Report(models.Model):
     summary_text = models.TextField(blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     data_ref = models.TextField(blank=True)
+    window_start = models.DateTimeField(null=True, blank=True)
+    window_end = models.DateTimeField(null=True, blank=True)
+    followup_deadline_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

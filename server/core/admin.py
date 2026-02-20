@@ -7,6 +7,7 @@ from .models import (
     Report,
     ReportMessage,
     Tenant,
+    TenantRuntimeConfig,
     UserProfile,
     UserRole,
 )
@@ -46,16 +47,48 @@ class IntegrationConfigAdmin(admin.ModelAdmin):
 
 @admin.register(JobRun)
 class JobRunAdmin(admin.ModelAdmin):
-    list_display = ("tenant", "job_type", "status", "progress", "started_at", "finished_at")
-    list_filter = ("job_type", "status")
+    list_display = (
+        "tenant",
+        "job_type",
+        "mode",
+        "trigger_type",
+        "status",
+        "progress",
+        "started_at",
+        "finished_at",
+    )
+    list_filter = ("job_type", "mode", "trigger_type", "status")
     search_fields = ("tenant__name", "tenant__slug")
     readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ("tenant", "report_type", "status", "period_start", "period_end", "updated_at")
+    list_display = (
+        "tenant",
+        "report_type",
+        "status",
+        "period_start",
+        "period_end",
+        "followup_deadline_at",
+        "updated_at",
+    )
     list_filter = ("report_type", "status")
+    search_fields = ("tenant__name", "tenant__slug")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(TenantRuntimeConfig)
+class TenantRuntimeConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        "tenant",
+        "mode",
+        "timezone",
+        "business_day_start",
+        "scheduled_run_time",
+        "is_schedule_enabled",
+    )
+    list_filter = ("mode", "is_schedule_enabled", "timezone")
     search_fields = ("tenant__name", "tenant__slug")
     readonly_fields = ("created_at", "updated_at")
 

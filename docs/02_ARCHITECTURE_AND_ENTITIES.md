@@ -38,18 +38,24 @@
 - Поля состояния: `status`, `last_error`, `last_checked_at`.
 - Секретные поля: `secret_data_encrypted` (шифрование через Fernet, см. `server/core/crypto.py`).
 
-## 3.5 JobRun
+## 3.5 TenantRuntimeConfig
+- Runtime-настройки tenant pipeline.
+- Поля: `mode`, `timezone`, `business_day_start`, `scheduled_run_time`, `is_schedule_enabled`.
+- Ограничения ручного запуска: `max_force_lookback_days`, `max_force_window_hours`.
+- Параметры потока: `radist_fetch_limit`, `min_dialogs_for_report`, `telegram_followup_minutes`.
+
+## 3.6 JobRun
 - Трекер выполнения задач/пайплайнов.
-- Поля: `job_type`, `status`, `current_step`, `progress`, `error`, временные метки.
+- Поля: `job_type`, `mode`, `trigger_type`, `status`, `current_step`, `progress`, `error`, `window_start`, `window_end`, `idempotency_key`, временные метки.
 
-## 3.6 Report
+## 3.7 Report
 - Отчет за период.
-- Поля: `period_start`, `period_end`, `report_type`, `status`, `summary_text`, `metadata`, `data_ref`.
+- Поля: `period_start`, `period_end`, `window_start`, `window_end`, `report_type`, `status`, `summary_text`, `metadata`, `data_ref`, `followup_deadline_at`.
 
-## 3.7 ReportMessage
+## 3.8 ReportMessage
 - Follow-up вопросы/ответы к отчету.
 
-## 3.8 AuditLog
+## 3.9 AuditLog
 - Журнал действий и событий.
 - Поля: `action`, `message`, `metadata`, `ip_address`.
 
@@ -71,4 +77,3 @@
 - Нет полного production-оркестратора пайплайна внутри Django/Celery.
 - Нет полного API-слоя для внешнего управления отчетами.
 - Не оформлен отдельный модуль доменной логики по каждому интегратору (сейчас часть проверки в `views.py`).
-

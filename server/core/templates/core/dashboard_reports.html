@@ -1,27 +1,112 @@
-{% extends "core/base.html" %}
+﻿{% extends "core/base.html" %}
 {% block title %}Synkro - Отчеты{% endblock %}
 {% block content %}
   <div class="card">
     <div class="section-title">
       <h3>Отчеты</h3>
-      <button class="btn">Принудительный отчет</button>
     </div>
+
+    {% if tenants %}
+      <form method="get" class="form-row">
+        <label>Tenant</label>
+        <select name="tenant" class="input">
+          {% for t in tenants %}
+            <option value="{{ t.id }}" {% if tenant and t.id == tenant.id %}selected{% endif %}>{{ t.name }} ({{ t.slug }})</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit">Выбрать</button>
+      </form>
+    {% endif %}
+
+    {% if tenant and runtime_config %}
+      <p class="muted">
+        Tenant: {{ tenant.name }} ({{ tenant.slug }}) |
+        Режим: {{ runtime_config.mode }} |
+        Начало рабочих суток: {{ runtime_config.business_day_start|time:"H:i" }} |
+        Автозапуск: {{ runtime_config.scheduled_run_time|time:"H:i" }} ({{ runtime_config.timezone }})
+      </p>
+    {% endif %}
+
+    {% if message %}
+      <p class="muted">{{ message }}</p>
+    {% endif %}
+    {% if not can_force_report and tenant %}
+      <p class="muted">Запуск принудительного отчета доступен только для клиентской роли.</p>
+    {% endif %}
+
+    {% if tenant and forced_form %}
+      <form method="post" class="form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+        <div>
+          <label>{{ forced_form.window_start.label }}</label>
+          {{ forced_form.window_start }}
+          {% if forced_form.window_start.errors %}<div class="muted">{{ forced_form.window_start.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label>{{ forced_form.window_end.label }}</label>
+          {{ forced_form.window_end }}
+          {% if forced_form.window_end.errors %}<div class="muted">{{ forced_form.window_end.errors }}</div>{% endif %}
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="submit" name="action" value="run_forced_report" {% if not can_force_report %}disabled{% endif %}>
+            Принудительный отчет
+          </button>
+        </div>
+      </form>
+    {% endif %}
+
+    {% if last_scheduled_window %}
+      <p class="muted">
+        Следующее регулярное окно (последние закрытые сутки):
+        {{ last_scheduled_window.window_start }} .. {{ last_scheduled_window.window_end }}
+      </p>
+    {% endif %}
+
+    {% if active_report_job %}
+      <div class="status-row">
+        <span class="pill">Статус: {{ active_report_job.status }}</span>
+        <span class="pill">{{ active_report_job.progress }}%</span>
+        <span class="pill">{{ active_report_job.current_step }}</span>
+        <span class="pill">Job #{{ active_report_job.id }}</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width: {{ active_report_job.progress }}%;"></div>
+      </div>
+      <script>
+        setTimeout(function () {
+          window.location.reload();
+        }, 3000);
+      </script>
+    {% endif %}
+
     <table class="table">
       <thead>
         <tr>
-          <th>Дата</th>
+          <th>Окно</th>
           <th>Тип</th>
+          <th>Job</th>
           <th>Комментарий</th>
           <th>Статус</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td class="muted">—</td>
-          <td class="muted">—</td>
-          <td class="muted">—</td>
-          <td class="muted">Нет данных</td>
-        </tr>
+        {% for report in reports %}
+          <tr>
+            <td>{{ report.window_start|default:report.period_start }} - {{ report.window_end|default:report.period_end }}</td>
+            <td>{{ report.report_type }}</td>
+            <td>{% if report.job_run %}#{{ report.job_run_id }}{% else %}-{% endif %}</td>
+            <td>{{ report.summary_text|default:"-"|truncatechars:140 }}</td>
+            <td>{{ report.status }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="muted">—</td>
+            <td class="muted">—</td>
+            <td class="muted">—</td>
+            <td class="muted">Нет данных</td>
+          </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

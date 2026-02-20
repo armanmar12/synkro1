@@ -1,9 +1,11 @@
 import json
+from datetime import timedelta
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from django.conf import settings
 from django.contrib import auth
+from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -11,12 +13,22 @@ from .crypto import decrypt_payload, encrypt_payload
 from .forms import (
     AISettingsForm,
     AmoCRMSettingsForm,
+    ForcedReportForm,
     RadistSettingsForm,
     SupabaseSettingsForm,
+    TenantRuntimeSettingsForm,
     TelegramSettingsForm,
     UserProfileForm,
 )
-from .models import IntegrationConfig, Tenant, UserProfile, UserRole
+from .models import IntegrationConfig, JobRun, Report, Tenant, TenantRuntimeConfig, UserProfile, UserRole
+from .pipeline import (
+    PipelineError,
+    build_job_idempotency_key,
+    compute_last_closed_window,
+    get_or_create_runtime_config,
+    queue_report_job,
+    validate_forced_window,
+)
 
 
 def _is_authed(request):
@@ -84,12 +96,111 @@ def dashboard_overview(request):
 
 @_require_auth
 def dashboard_reports(request):
+    tenant_id = request.POST.get("tenant_id") or request.GET.get("tenant")
+    tenant = None
+    if tenant_id:
+        tenant = Tenant.objects.filter(id=tenant_id).first()
+    if tenant is None:
+        tenant = Tenant.objects.filter(slug="globalfruit").first()
+    if tenant is None:
+        tenant = Tenant.objects.order_by("name").first()
+
+    tenants = list(Tenant.objects.order_by("name"))
+    runtime_config = get_or_create_runtime_config(tenant) if tenant else None
+    can_force_report = _can_run_reports_as_client(request.user, tenant)
+    message = None
+
+    forced_form = ForcedReportForm()
+    if request.method == "POST" and request.POST.get("action") == "run_forced_report":
+        forced_form = ForcedReportForm(request.POST)
+        if not tenant or not runtime_config:
+            message = "Tenant not found."
+        elif not can_force_report:
+            message = "Forced reports can be started only from a client account."
+        elif not forced_form.is_valid():
+            message = "Check forced report date range."
+        else:
+            window_start = forced_form.cleaned_data["window_start"]
+            window_end = forced_form.cleaned_data["window_end"]
+            if timezone.is_naive(window_start):
+                window_start = timezone.make_aware(window_start, timezone.get_current_timezone())
+            if timezone.is_naive(window_end):
+                window_end = timezone.make_aware(window_end, timezone.get_current_timezone())
+            validation_error = validate_forced_window(runtime_config, window_start, window_end)
+            if validation_error:
+                message = validation_error
+            else:
+                idempotency_key = build_job_idempotency_key(
+                    tenant.id,
+                    JobRun.TriggerType.MANUAL,
+                    runtime_config.mode,
+                    window_start,
+                    window_end,
+                )
+                try:
+                    job, created = queue_report_job(
+                        tenant=tenant,
+                        runtime_config=runtime_config,
+                        trigger_type=JobRun.TriggerType.MANUAL,
+                        window_start=window_start,
+                        window_end=window_end,
+                        requested_by=request.user,
+                        idempotency_key=idempotency_key,
+                        metadata={"source": "dashboard_reports"},
+                    )
+                    if created:
+                        message = f"Forced report queued. Job #{job.id}."
+                    else:
+                        message = f"Matching job already exists. Job #{job.id}."
+                except PipelineError as exc:
+                    message = str(exc)
+
+    if request.method != "POST" and runtime_config:
+        default_end = timezone.now()
+        default_start = default_end - timedelta(hours=min(runtime_config.max_force_window_hours, 24))
+        forced_form = ForcedReportForm(
+            initial={
+                "window_start": default_start.strftime("%Y-%m-%dT%H:%M"),
+                "window_end": default_end.strftime("%Y-%m-%dT%H:%M"),
+            }
+        )
+
+    active_report_job = None
+    last_scheduled_window = None
+    reports = []
+    if tenant and runtime_config:
+        active_report_job = (
+            JobRun.objects.filter(
+                tenant=tenant,
+                job_type=JobRun.JobType.REPORT_BUILD,
+                status__in=[JobRun.Status.PENDING, JobRun.Status.RUNNING],
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        window_start, window_end = compute_last_closed_window(runtime_config)
+        last_scheduled_window = {
+            "window_start": window_start,
+            "window_end": window_end,
+            "mode": runtime_config.mode,
+        }
+        reports = list(Report.objects.filter(tenant=tenant).order_by("-created_at")[:20])
+
     return render(
         request,
         "core/dashboard_reports.html",
         {
             "active": "reports",
             "can_access_settings_menu": _can_access_settings_menu(request.user),
+            "message": message,
+            "tenant": tenant,
+            "tenants": tenants,
+            "runtime_config": runtime_config,
+            "can_force_report": can_force_report,
+            "forced_form": forced_form,
+            "last_scheduled_window": last_scheduled_window,
+            "active_report_job": active_report_job,
+            "reports": reports,
         },
     )
 
@@ -154,6 +265,7 @@ def dashboard_settings(request):
     radist_config = None
     ai_config = None
     telegram_config = None
+    runtime_config = None
     message = None
 
     ai_model_choices: list[tuple[str, str]] = []
@@ -162,15 +274,28 @@ def dashboard_settings(request):
     radist_form = RadistSettingsForm()
     ai_form = AISettingsForm(model_choices=ai_model_choices)
     telegram_form = TelegramSettingsForm()
+    runtime_form = TenantRuntimeSettingsForm()
 
     has_secret_supabase = False
     has_secret_amocrm = False
     has_secret_radist = False
     has_secret_ai = False
     has_secret_telegram = False
+    show_amocrm_settings = True
+    show_radist_settings = True
 
     can_manage_settings = _can_manage_settings(request.user, tenant)
     if tenant and can_manage_settings:
+        runtime_config = get_or_create_runtime_config(tenant)
+        show_amocrm_settings = runtime_config.mode in {
+            TenantRuntimeConfig.Mode.AMOCRM_RADIST,
+            TenantRuntimeConfig.Mode.AMOCRM_ONLY,
+        }
+        show_radist_settings = runtime_config.mode in {
+            TenantRuntimeConfig.Mode.AMOCRM_RADIST,
+            TenantRuntimeConfig.Mode.RADIST_ONLY,
+        }
+
         supabase_config = _get_or_create_config(tenant, IntegrationConfig.Kind.SUPABASE)
         amocrm_config = _get_or_create_config(tenant, IntegrationConfig.Kind.AMOCRM)
         radist_config = _get_or_create_config(tenant, IntegrationConfig.Kind.RADIST)
@@ -196,7 +321,41 @@ def dashboard_settings(request):
 
         action = request.POST.get("action")
         if request.method == "POST" and action:
-            if action == "save_supabase" or action == "check_supabase":
+            if action == "save_runtime":
+                runtime_form = TenantRuntimeSettingsForm(request.POST)
+                if runtime_form.is_valid():
+                    runtime_config.mode = runtime_form.cleaned_data["mode"]
+                    runtime_config.timezone = runtime_form.cleaned_data["timezone"].strip()
+                    runtime_config.business_day_start = runtime_form.cleaned_data["business_day_start"]
+                    runtime_config.scheduled_run_time = runtime_form.cleaned_data["scheduled_run_time"]
+                    runtime_config.is_schedule_enabled = runtime_form.cleaned_data["is_schedule_enabled"]
+                    runtime_config.radist_fetch_limit = runtime_form.cleaned_data["radist_fetch_limit"]
+                    runtime_config.min_dialogs_for_report = runtime_form.cleaned_data[
+                        "min_dialogs_for_report"
+                    ]
+                    runtime_config.max_force_lookback_days = runtime_form.cleaned_data[
+                        "max_force_lookback_days"
+                    ]
+                    runtime_config.max_force_window_hours = runtime_form.cleaned_data[
+                        "max_force_window_hours"
+                    ]
+                    runtime_config.telegram_followup_minutes = runtime_form.cleaned_data[
+                        "telegram_followup_minutes"
+                    ]
+                    runtime_config.save()
+                    show_amocrm_settings = runtime_config.mode in {
+                        TenantRuntimeConfig.Mode.AMOCRM_RADIST,
+                        TenantRuntimeConfig.Mode.AMOCRM_ONLY,
+                    }
+                    show_radist_settings = runtime_config.mode in {
+                        TenantRuntimeConfig.Mode.AMOCRM_RADIST,
+                        TenantRuntimeConfig.Mode.RADIST_ONLY,
+                    }
+                    message = "Runtime settings saved."
+                else:
+                    message = "Runtime settings: please check required fields."
+
+            elif action == "save_supabase" or action == "check_supabase":
                 supabase_form = SupabaseSettingsForm(request.POST)
                 if supabase_form.is_valid():
                     url = supabase_form.cleaned_data["supabase_url"].strip()
@@ -451,6 +610,21 @@ def dashboard_settings(request):
                     "chat_id": telegram_config.public_config.get("chat_id", ""),
                 }
             )
+        if request.method != "POST" or action not in {"save_runtime"}:
+            runtime_form = TenantRuntimeSettingsForm(
+                initial={
+                    "mode": runtime_config.mode,
+                    "timezone": runtime_config.timezone,
+                    "business_day_start": runtime_config.business_day_start.strftime("%H:%M"),
+                    "scheduled_run_time": runtime_config.scheduled_run_time.strftime("%H:%M"),
+                    "is_schedule_enabled": runtime_config.is_schedule_enabled,
+                    "radist_fetch_limit": runtime_config.radist_fetch_limit,
+                    "min_dialogs_for_report": runtime_config.min_dialogs_for_report,
+                    "max_force_lookback_days": runtime_config.max_force_lookback_days,
+                    "max_force_window_hours": runtime_config.max_force_window_hours,
+                    "telegram_followup_minutes": runtime_config.telegram_followup_minutes,
+                }
+            )
 
     context = {
         "active": "settings",
@@ -459,6 +633,10 @@ def dashboard_settings(request):
         "tenants": tenants,
         "can_manage_settings": can_manage_settings,
         "message": message,
+        "runtime_form": runtime_form,
+        "runtime_config": runtime_config,
+        "show_amocrm_settings": show_amocrm_settings,
+        "show_radist_settings": show_radist_settings,
         "supabase_form": supabase_form,
         "amocrm_form": amocrm_form,
         "radist_form": radist_form,
@@ -538,6 +716,16 @@ def _can_access_settings_menu(user) -> bool:
         is_active=True,
         role__in=[UserRole.Role.SUPER_ADMIN, UserRole.Role.ADMIN_LITE],
     ).exists()
+
+
+def _can_run_reports_as_client(user, tenant: Tenant | None) -> bool:
+    if not user.is_authenticated or user.is_superuser or tenant is None:
+        return False
+    return UserRole.objects.filter(
+        user=user,
+        is_active=True,
+        role=UserRole.Role.USER,
+    ).filter(Q(tenant=tenant) | Q(tenant__isnull=True)).exists()
 
 
 def _check_amocrm(domain: str, access_token: str) -> tuple[bool, str]:

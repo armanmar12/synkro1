@@ -1,5 +1,6 @@
 from django import forms
 
+from .models import TenantRuntimeConfig
 
 class SupabaseSettingsForm(forms.Form):
     supabase_url = forms.URLField(label="SUPABASE_URL", required=True)
@@ -88,6 +89,64 @@ class UserProfileForm(forms.Form):
     email = forms.EmailField(label="Email", required=True)
     phone = forms.CharField(label="Телефон", required=False, max_length=32)
     timezone = forms.CharField(label="Часовой пояс", required=True, max_length=64)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"
+
+
+class TenantRuntimeSettingsForm(forms.Form):
+    mode = forms.ChoiceField(label="Режим работы", choices=TenantRuntimeConfig.Mode.choices)
+    timezone = forms.CharField(label="Часовой пояс", max_length=64)
+    business_day_start = forms.TimeField(
+        label="Начало рабочих суток",
+        input_formats=["%H:%M"],
+        widget=forms.TimeInput(format="%H:%M", attrs={"type": "time"}),
+    )
+    scheduled_run_time = forms.TimeField(
+        label="Время автозапуска",
+        input_formats=["%H:%M"],
+        widget=forms.TimeInput(format="%H:%M", attrs={"type": "time"}),
+    )
+    is_schedule_enabled = forms.BooleanField(label="Включить автозапуск", required=False)
+    radist_fetch_limit = forms.IntegerField(label="Radist fetch limit", min_value=10, max_value=5000)
+    min_dialogs_for_report = forms.IntegerField(
+        label="Минимум диалогов для отчета", min_value=0, max_value=10000
+    )
+    max_force_lookback_days = forms.IntegerField(
+        label="Ручной запуск: дней назад", min_value=1, max_value=7
+    )
+    max_force_window_hours = forms.IntegerField(
+        label="Ручной запуск: максимум часов", min_value=1, max_value=24
+    )
+    telegram_followup_minutes = forms.IntegerField(
+        label="Окно вопросов в Telegram (мин)", min_value=1, max_value=240
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"
+
+
+class ForcedReportForm(forms.Form):
+    window_start = forms.DateTimeField(
+        label="С",
+        input_formats=["%Y-%m-%dT%H:%M"],
+        widget=forms.DateTimeInput(
+            format="%Y-%m-%dT%H:%M",
+            attrs={"type": "datetime-local"},
+        ),
+    )
+    window_end = forms.DateTimeField(
+        label="По",
+        input_formats=["%Y-%m-%dT%H:%M"],
+        widget=forms.DateTimeInput(
+            format="%Y-%m-%dT%H:%M",
+            attrs={"type": "datetime-local"},
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

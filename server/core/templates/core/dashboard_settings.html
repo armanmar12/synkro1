@@ -23,8 +23,8 @@
 
   <div class="grid-2">
     <div class="card">
-      <h3>Supabase</h3>
-      <p class="muted">URL и ключи. Проверка подключения.</p>
+      <h3>Runtime</h3>
+      <p class="muted">Режим работы tenant, границы рабочих суток, расписание и лимиты ручного запуска.</p>
       {% if tenants %}
         <form method="get" class="form-row">
           <label>Tenant</label>
@@ -35,7 +35,73 @@
           </select>
           <button class="btn" type="submit">Выбрать</button>
         </form>
-      {% else %}
+      {% endif %}
+
+      {% if tenant and can_manage_settings %}
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <div>
+            <label>{{ runtime_form.mode.label }}</label>
+            {{ runtime_form.mode }}
+            {% if runtime_form.mode.errors %}<div class="muted">{{ runtime_form.mode.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.timezone.label }}</label>
+            {{ runtime_form.timezone }}
+            {% if runtime_form.timezone.errors %}<div class="muted">{{ runtime_form.timezone.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.business_day_start.label }}</label>
+            {{ runtime_form.business_day_start }}
+            {% if runtime_form.business_day_start.errors %}<div class="muted">{{ runtime_form.business_day_start.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.scheduled_run_time.label }}</label>
+            {{ runtime_form.scheduled_run_time }}
+            {% if runtime_form.scheduled_run_time.errors %}<div class="muted">{{ runtime_form.scheduled_run_time.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.radist_fetch_limit.label }}</label>
+            {{ runtime_form.radist_fetch_limit }}
+            {% if runtime_form.radist_fetch_limit.errors %}<div class="muted">{{ runtime_form.radist_fetch_limit.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.min_dialogs_for_report.label }}</label>
+            {{ runtime_form.min_dialogs_for_report }}
+            {% if runtime_form.min_dialogs_for_report.errors %}<div class="muted">{{ runtime_form.min_dialogs_for_report.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.max_force_lookback_days.label }}</label>
+            {{ runtime_form.max_force_lookback_days }}
+            {% if runtime_form.max_force_lookback_days.errors %}<div class="muted">{{ runtime_form.max_force_lookback_days.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.max_force_window_hours.label }}</label>
+            {{ runtime_form.max_force_window_hours }}
+            {% if runtime_form.max_force_window_hours.errors %}<div class="muted">{{ runtime_form.max_force_window_hours.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.telegram_followup_minutes.label }}</label>
+            {{ runtime_form.telegram_followup_minutes }}
+            {% if runtime_form.telegram_followup_minutes.errors %}<div class="muted">{{ runtime_form.telegram_followup_minutes.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label>{{ runtime_form.is_schedule_enabled.label }}</label>
+            <div>{{ runtime_form.is_schedule_enabled }}</div>
+            {% if runtime_form.is_schedule_enabled.errors %}<div class="muted">{{ runtime_form.is_schedule_enabled.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit" name="action" value="save_runtime">Сохранить runtime</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Supabase</h3>
+      <p class="muted">URL и ключи. Проверка подключения.</p>
+      {% if not tenants %}
         <p class="muted">Нет tenant'ов. Создайте первый в админке.</p>
       {% endif %}
 
@@ -78,7 +144,8 @@
       {% endif %}
     </div>
 
-    <div class="card">
+    {% if show_amocrm_settings %}
+      <div class="card">
       <h3>amoCRM</h3>
       <p class="muted">Инструкция + callback URL. Тестовые 3 диалога.</p>
       {% if tenant and can_manage_settings %}
@@ -130,9 +197,11 @@
           </div>
         </form>
       {% endif %}
-    </div>
+      </div>
+    {% endif %}
 
-    <div class="card">
+    {% if show_radist_settings %}
+      <div class="card">
       <h3>Radist</h3>
       <p class="muted">API ключ. Проверка диалогов.</p>
       {% if tenant and can_manage_settings %}
@@ -171,7 +240,8 @@
           </div>
         </form>
       {% endif %}
-    </div>
+      </div>
+    {% endif %}
 
     <div class="card">
       <h3>AI</h3>

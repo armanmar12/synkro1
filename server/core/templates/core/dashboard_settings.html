@@ -159,6 +159,10 @@
           <div>
             <label>{{ radist_form.api_key.label }}</label>
             {{ radist_form.api_key }}
+            <div class="muted">
+              {% if has_secret_radist %}Ключ уже сохранён. {% endif %}
+              {{ radist_form.api_key.help_text }}
+            </div>
             {% if radist_form.api_key.errors %}<div class="muted">{{ radist_form.api_key.errors }}</div>{% endif %}
           </div>
           <div class="form-actions">
@@ -184,19 +188,29 @@
           {% csrf_token %}
           <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
           <div>
+            <label>{{ ai_form.profile_name.label }}</label>
+            {{ ai_form.profile_name }}
+            <div class="muted">Опционально. Для удобного имени ключа/набора.</div>
+            {% if ai_form.profile_name.errors %}<div class="muted">{{ ai_form.profile_name.errors }}</div>{% endif %}
+          </div>
+          <div>
             <label>{{ ai_form.provider.label }}</label>
             {{ ai_form.provider }}
             {% if ai_form.provider.errors %}<div class="muted">{{ ai_form.provider.errors }}</div>{% endif %}
           </div>
           <div>
+            <label>{{ ai_form.api_key.label }}</label>
+            {{ ai_form.api_key }}
+            <div class="muted">
+              {% if has_secret_ai %}Ключ уже сохранён. {% endif %}
+              {{ ai_form.api_key.help_text }}
+            </div>
+            {% if ai_form.api_key.errors %}<div class="muted">{{ ai_form.api_key.errors }}</div>{% endif %}
+          </div>
+          <div>
             <label>{{ ai_form.model.label }}</label>
             {{ ai_form.model }}
             {% if ai_form.model.errors %}<div class="muted">{{ ai_form.model.errors }}</div>{% endif %}
-          </div>
-          <div>
-            <label>{{ ai_form.api_key.label }}</label>
-            {{ ai_form.api_key }}
-            {% if ai_form.api_key.errors %}<div class="muted">{{ ai_form.api_key.errors }}</div>{% endif %}
           </div>
           <div>
             <label>{{ ai_form.prompt.label }}</label>
@@ -205,6 +219,7 @@
           </div>
           <div class="form-actions">
             <button class="btn" type="submit" name="action" value="save_ai">Сохранить</button>
+            <button class="btn btn-secondary" type="submit" name="action" value="load_ai_models">Загрузить модели</button>
             <button class="btn btn-secondary" type="submit" name="action" value="check_ai">Проверить</button>
           </div>
         </form>
@@ -228,6 +243,10 @@
           <div>
             <label>{{ telegram_form.bot_token.label }}</label>
             {{ telegram_form.bot_token }}
+            <div class="muted">
+              {% if has_secret_telegram %}Токен уже сохранён. {% endif %}
+              {{ telegram_form.bot_token.help_text }}
+            </div>
             {% if telegram_form.bot_token.errors %}<div class="muted">{{ telegram_form.bot_token.errors }}</div>{% endif %}
           </div>
           <div>

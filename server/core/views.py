@@ -32,6 +32,21 @@ def _require_auth(view_func):
     return _wrapped
 
 
+def _model_choices_from_public(raw_models) -> list[tuple[str, str]]:
+    if not isinstance(raw_models, list):
+        return []
+
+    model_choices: list[tuple[str, str]] = []
+    for item in raw_models:
+        if not isinstance(item, str):
+            continue
+        model_name = item.strip()
+        if not model_name:
+            continue
+        model_choices.append((model_name, model_name.replace("models/", "")))
+    return model_choices
+
+
 def login_view(request):
     context = {}
     if request.method == "POST":
@@ -141,10 +156,11 @@ def dashboard_settings(request):
     telegram_config = None
     message = None
 
+    ai_model_choices: list[tuple[str, str]] = []
     supabase_form = SupabaseSettingsForm()
     amocrm_form = AmoCRMSettingsForm()
     radist_form = RadistSettingsForm()
-    ai_form = AISettingsForm()
+    ai_form = AISettingsForm(model_choices=ai_model_choices)
     telegram_form = TelegramSettingsForm()
 
     has_secret_supabase = False
@@ -176,6 +192,7 @@ def dashboard_settings(request):
         has_secret_radist = bool(radist_secret.get("api_key"))
         has_secret_ai = bool(ai_secret.get("api_key"))
         has_secret_telegram = bool(telegram_secret.get("bot_token"))
+        ai_model_choices = _model_choices_from_public(ai_config.public_config.get("available_models", []))
 
         action = request.POST.get("action")
         if request.method == "POST" and action:
@@ -255,61 +272,106 @@ def dashboard_settings(request):
                         "api_base_url": radist_form.cleaned_data["api_base_url"].strip(),
                         "company_id": radist_form.cleaned_data["company_id"],
                     }
-                    radist_config.secret_data_encrypted = encrypt_payload(
-                        {"api_key": radist_form.cleaned_data["api_key"].strip()}
-                    )
-                    if action == "check_radist":
-                        ok, error = _check_radist(
-                            radist_config.public_config.get("api_base_url", ""),
-                            radist_config.public_config.get("company_id"),
-                            decrypt_payload(radist_config.secret_data_encrypted).get("api_key", ""),
-                        )
-                        radist_config.status = (
-                            IntegrationConfig.Status.OK
-                            if ok
-                            else IntegrationConfig.Status.ERROR
-                        )
-                        radist_config.last_error = "" if ok else error
-                        radist_config.last_checked_at = timezone.now()
-                        message = "Radist: проверка OK" if ok else f"Radist: ошибка {error}"
+                    secret_payload = radist_secret.copy()
+                    api_key = radist_form.cleaned_data["api_key"].strip()
+                    if api_key:
+                        secret_payload["api_key"] = api_key
+                    active_api_key = secret_payload.get("api_key", "")
+                    if not active_api_key:
+                        radist_form.add_error("api_key", "Укажите API key или сохраните его ранее.")
+                        message = "Radist: API key обязателен."
                     else:
-                        radist_config.status = IntegrationConfig.Status.PENDING
-                        message = "Radist: настройки сохранены."
-                    radist_config.save()
-                    has_secret_radist = True
+                        radist_config.secret_data_encrypted = encrypt_payload(secret_payload)
+                    if active_api_key:
+                        if action == "check_radist":
+                            ok, error = _check_radist(
+                                radist_config.public_config.get("api_base_url", ""),
+                                radist_config.public_config.get("company_id"),
+                                active_api_key,
+                            )
+                            radist_config.status = (
+                                IntegrationConfig.Status.OK
+                                if ok
+                                else IntegrationConfig.Status.ERROR
+                            )
+                            radist_config.last_error = "" if ok else error
+                            radist_config.last_checked_at = timezone.now()
+                            message = "Radist: проверка OK" if ok else f"Radist: ошибка {error}"
+                        else:
+                            radist_config.status = IntegrationConfig.Status.PENDING
+                            message = "Radist: настройки сохранены."
+                        radist_config.save()
+                        has_secret_radist = True
                 else:
                     message = "Radist: проверьте заполнение полей."
 
-            elif action in {"save_ai", "check_ai"}:
-                ai_form = AISettingsForm(request.POST)
+            elif action in {"save_ai", "check_ai", "load_ai_models"}:
+                ai_form = AISettingsForm(request.POST, model_choices=ai_model_choices)
                 if ai_form.is_valid():
+                    secret_payload = ai_secret.copy()
+                    api_key = ai_form.cleaned_data["api_key"].strip()
+                    if api_key:
+                        secret_payload["api_key"] = api_key
+                    active_api_key = secret_payload.get("api_key", "")
                     ai_config.public_config = {
                         "provider": ai_form.cleaned_data["provider"].strip(),
                         "model": ai_form.cleaned_data["model"].strip(),
+                        "profile_name": ai_form.cleaned_data["profile_name"].strip(),
                         "prompt": ai_form.cleaned_data["prompt"].strip(),
                     }
-                    ai_config.secret_data_encrypted = encrypt_payload(
-                        {"api_key": ai_form.cleaned_data["api_key"].strip()}
-                    )
-                    if action == "check_ai":
-                        ok, error = _check_ai(
-                            ai_config.public_config.get("provider", ""),
-                            ai_config.public_config.get("model", ""),
-                            decrypt_payload(ai_config.secret_data_encrypted).get("api_key", ""),
-                        )
-                        ai_config.status = (
-                            IntegrationConfig.Status.OK
-                            if ok
-                            else IntegrationConfig.Status.ERROR
-                        )
-                        ai_config.last_error = "" if ok else error
-                        ai_config.last_checked_at = timezone.now()
-                        message = "AI: проверка OK" if ok else f"AI: ошибка {error}"
+                    if not active_api_key:
+                        ai_form.add_error("api_key", "Укажите API key или сохраните его ранее.")
+                        message = "AI: API key обязателен."
                     else:
-                        ai_config.status = IntegrationConfig.Status.PENDING
-                        message = "AI: настройки сохранены."
-                    ai_config.save()
-                    has_secret_ai = True
+                        models, model_error = _fetch_ai_models(
+                            ai_config.public_config.get("provider", ""),
+                            active_api_key,
+                        )
+                        if models:
+                            ai_model_choices = models
+                            ai_config.public_config["available_models"] = [value for value, _ in models]
+                        elif action == "load_ai_models":
+                            message = f"AI: не удалось загрузить модели ({model_error})."
+
+                        selected_model = ai_config.public_config.get("model", "")
+                        if selected_model:
+                            available_values = {value for value, _ in ai_model_choices}
+                            if available_values and selected_model not in available_values:
+                                ai_config.public_config["model"] = ""
+
+                        ai_config.secret_data_encrypted = encrypt_payload(secret_payload)
+                        if action == "check_ai":
+                            ok, error = _check_ai(
+                                ai_config.public_config.get("provider", ""),
+                                ai_config.public_config.get("model", ""),
+                                active_api_key,
+                            )
+                            ai_config.status = (
+                                IntegrationConfig.Status.OK
+                                if ok
+                                else IntegrationConfig.Status.ERROR
+                            )
+                            ai_config.last_error = "" if ok else error
+                            ai_config.last_checked_at = timezone.now()
+                            message = "AI: проверка OK" if ok else f"AI: ошибка {error}"
+                        elif action == "load_ai_models":
+                            ai_config.status = IntegrationConfig.Status.PENDING
+                            if models:
+                                message = "AI: список моделей загружен."
+                        else:
+                            ai_config.status = IntegrationConfig.Status.PENDING
+                            message = "AI: настройки сохранены."
+                        ai_config.save()
+                        has_secret_ai = True
+                        ai_form = AISettingsForm(
+                            initial={
+                                "provider": ai_config.public_config.get("provider", "gemini"),
+                                "model": ai_config.public_config.get("model", ""),
+                                "profile_name": ai_config.public_config.get("profile_name", ""),
+                                "prompt": ai_config.public_config.get("prompt", ""),
+                            },
+                            model_choices=ai_model_choices,
+                        )
                 else:
                     message = "AI: проверьте заполнение полей."
 
@@ -319,27 +381,36 @@ def dashboard_settings(request):
                     telegram_config.public_config = {
                         "chat_id": telegram_form.cleaned_data["chat_id"].strip()
                     }
-                    telegram_config.secret_data_encrypted = encrypt_payload(
-                        {"bot_token": telegram_form.cleaned_data["bot_token"].strip()}
-                    )
-                    if action == "check_telegram":
-                        ok, error = _check_telegram(
-                            telegram_config.public_config.get("chat_id", ""),
-                            decrypt_payload(telegram_config.secret_data_encrypted).get("bot_token", ""),
+                    secret_payload = telegram_secret.copy()
+                    bot_token = telegram_form.cleaned_data["bot_token"].strip()
+                    if bot_token:
+                        secret_payload["bot_token"] = bot_token
+                    active_bot_token = secret_payload.get("bot_token", "")
+                    if not active_bot_token:
+                        telegram_form.add_error(
+                            "bot_token", "Укажите bot token или сохраните его ранее."
                         )
-                        telegram_config.status = (
-                            IntegrationConfig.Status.OK
-                            if ok
-                            else IntegrationConfig.Status.ERROR
-                        )
-                        telegram_config.last_error = "" if ok else error
-                        telegram_config.last_checked_at = timezone.now()
-                        message = "Telegram: проверка OK" if ok else f"Telegram: ошибка {error}"
+                        message = "Telegram: bot token обязателен."
                     else:
-                        telegram_config.status = IntegrationConfig.Status.PENDING
-                        message = "Telegram: настройки сохранены."
-                    telegram_config.save()
-                    has_secret_telegram = True
+                        telegram_config.secret_data_encrypted = encrypt_payload(secret_payload)
+                        if action == "check_telegram":
+                            ok, error = _check_telegram(
+                                telegram_config.public_config.get("chat_id", ""),
+                                active_bot_token,
+                            )
+                            telegram_config.status = (
+                                IntegrationConfig.Status.OK
+                                if ok
+                                else IntegrationConfig.Status.ERROR
+                            )
+                            telegram_config.last_error = "" if ok else error
+                            telegram_config.last_checked_at = timezone.now()
+                            message = "Telegram: проверка OK" if ok else f"Telegram: ошибка {error}"
+                        else:
+                            telegram_config.status = IntegrationConfig.Status.PENDING
+                            message = "Telegram: настройки сохранены."
+                        telegram_config.save()
+                        has_secret_telegram = True
                 else:
                     message = "Telegram: проверьте заполнение полей."
 
@@ -364,13 +435,15 @@ def dashboard_settings(request):
                     "company_id": radist_config.public_config.get("company_id", 205113),
                 }
             )
-        if request.method != "POST" or action not in {"save_ai", "check_ai"}:
+        if request.method != "POST" or action not in {"save_ai", "check_ai", "load_ai_models"}:
             ai_form = AISettingsForm(
                 initial={
-                    "provider": ai_config.public_config.get("provider", ""),
+                    "provider": ai_config.public_config.get("provider", "gemini"),
                     "model": ai_config.public_config.get("model", ""),
+                    "profile_name": ai_config.public_config.get("profile_name", ""),
                     "prompt": ai_config.public_config.get("prompt", ""),
-                }
+                },
+                model_choices=ai_model_choices,
             )
         if request.method != "POST" or action not in {"save_telegram", "check_telegram"}:
             telegram_form = TelegramSettingsForm(
@@ -515,13 +588,39 @@ def _check_radist(api_base_url: str, company_id: int | None, api_key: str) -> tu
         return False, f"Network error: {exc.reason}"
 
 
-def _check_ai(provider: str, model: str, api_key: str) -> tuple[bool, str]:
-    if not provider:
-        return False, "provider обязателен"
+def _fetch_ai_models(provider: str, api_key: str) -> tuple[list[tuple[str, str]], str]:
+    normalized_provider = (provider or "").strip().lower()
     if not api_key:
-        return False, "API key обязателен"
+        return [], "API key обязателен"
 
-    if provider.lower() == "openai":
+    if normalized_provider in {"gemini", "google", "google_gemini"}:
+        endpoint = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+        req = Request(endpoint, headers={"User-Agent": "synkro/1.0"}, method="GET")
+        try:
+            with urlopen(req, timeout=8) as response:
+                if response.status >= 400:
+                    return [], f"HTTP {response.status}"
+                payload = json.loads(response.read().decode("utf-8") or "{}")
+                model_items = payload.get("models", [])
+                result: list[tuple[str, str]] = []
+                for item in model_items:
+                    model_name = (item.get("name") or "").strip()
+                    if not model_name:
+                        continue
+                    if "gemini" not in model_name.lower():
+                        continue
+                    result.append((model_name, model_name.replace("models/", "")))
+                if not result:
+                    return [], "Список моделей пуст"
+                return result, ""
+        except HTTPError as exc:
+            return [], f"HTTP {exc.code}"
+        except URLError as exc:
+            return [], f"Network error: {exc.reason}"
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return [], "Не удалось разобрать ответ AI API"
+
+    if normalized_provider == "openai":
         endpoint = "https://api.openai.com/v1/models"
         req = Request(
             endpoint,
@@ -531,14 +630,44 @@ def _check_ai(provider: str, model: str, api_key: str) -> tuple[bool, str]:
         try:
             with urlopen(req, timeout=8) as response:
                 if response.status >= 400:
-                    return False, f"HTTP {response.status}"
-                return True, ""
+                    return [], f"HTTP {response.status}"
+                payload = json.loads(response.read().decode("utf-8") or "{}")
+                model_items = payload.get("data", [])
+                result: list[tuple[str, str]] = []
+                for item in model_items:
+                    model_id = (item.get("id") or "").strip()
+                    if not model_id:
+                        continue
+                    result.append((model_id, model_id))
+                if not result:
+                    return [], "Список моделей пуст"
+                return result, ""
         except HTTPError as exc:
-            return False, f"HTTP {exc.code}"
+            return [], f"HTTP {exc.code}"
         except URLError as exc:
-            return False, f"Network error: {exc.reason}"
+            return [], f"Network error: {exc.reason}"
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return [], "Не удалось разобрать ответ AI API"
 
-    return False, "Провайдер пока не поддержан для проверки"
+    return [], "Провайдер пока не поддержан для списка моделей"
+
+
+def _check_ai(provider: str, model: str, api_key: str) -> tuple[bool, str]:
+    if not provider:
+        return False, "provider обязателен"
+    if not api_key:
+        return False, "API key обязателен"
+
+    models, error = _fetch_ai_models(provider, api_key)
+    if not models:
+        return False, error
+
+    if model:
+        available_values = {value for value, _ in models}
+        if model not in available_values:
+            return False, "Выбранная модель не найдена в списке API"
+
+    return True, ""
 
 
 def _check_telegram(chat_id: str, bot_token: str) -> tuple[bool, str]:

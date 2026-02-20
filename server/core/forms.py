@@ -40,35 +40,48 @@ class AmoCRMSettingsForm(forms.Form):
 
 class RadistSettingsForm(forms.Form):
     api_base_url = forms.URLField(label="API base URL", required=False)
-    api_key = forms.CharField(label="API key", required=True, widget=forms.PasswordInput(render_value=False))
+    api_key = forms.CharField(label="API key", required=False, widget=forms.PasswordInput(render_value=False))
     company_id = forms.IntegerField(label="Company ID", required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
+        self.fields["api_key"].help_text = "Оставьте пустым, чтобы использовать сохраненный ключ."
 
 
 class AISettingsForm(forms.Form):
-    provider = forms.CharField(label="Provider", required=True)
-    model = forms.CharField(label="Model", required=False)
-    api_key = forms.CharField(label="API key", required=True, widget=forms.PasswordInput(render_value=False))
+    provider = forms.ChoiceField(
+        label="Provider",
+        required=True,
+        choices=[
+            ("gemini", "Google Gemini"),
+            ("openai", "OpenAI"),
+        ],
+    )
+    model = forms.CharField(label="Model", required=False, widget=forms.Select())
+    profile_name = forms.CharField(label="Key name", required=False, max_length=128)
+    api_key = forms.CharField(label="API key", required=False, widget=forms.PasswordInput(render_value=False))
     prompt = forms.CharField(label="Prompt", required=False, widget=forms.Textarea(attrs={"rows": 4}))
 
     def __init__(self, *args, **kwargs):
+        model_choices = kwargs.pop("model_choices", [])
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
+        self.fields["model"].widget.choices = [("", "Выберите модель")] + list(model_choices)
+        self.fields["api_key"].help_text = "Оставьте пустым, чтобы использовать сохраненный ключ."
 
 
 class TelegramSettingsForm(forms.Form):
-    bot_token = forms.CharField(label="Bot token", required=True, widget=forms.PasswordInput(render_value=False))
+    bot_token = forms.CharField(label="Bot token", required=False, widget=forms.PasswordInput(render_value=False))
     chat_id = forms.CharField(label="chat_id", required=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
+        self.fields["bot_token"].help_text = "Оставьте пустым, чтобы использовать сохраненный токен."
 
 
 class UserProfileForm(forms.Form):

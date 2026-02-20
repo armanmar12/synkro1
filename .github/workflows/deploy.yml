@@ -22,7 +22,7 @@ jobs:
       - name: Deploy over SSH (password auth)
         env:
           SSH_HOST: 93.170.72.31
-          SSH_PORT: "22"
+          SSH_PORT: 22
           SSH_USER: root
           SSH_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
           APP_DIR: /opt/synkro/app
@@ -37,11 +37,11 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p "${SSH_PORT}" -H "${SSH_HOST}" >> ~/.ssh/known_hosts
 
-          sshpass -p \"${SSH_PASSWORD}\" ssh \
+          sshpass -p "${SSH_PASSWORD}" ssh \
             -o StrictHostKeyChecking=yes \
             -o PreferredAuthentications=password \
             -o PubkeyAuthentication=no \
-            -p \"${SSH_PORT}\" \"${SSH_USER}@${SSH_HOST}\" "
+            -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" "
             set -e
             cd '${APP_DIR}'
             git fetch --all --prune

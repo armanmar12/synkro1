@@ -152,3 +152,16 @@ class ForcedReportForm(forms.Form):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
+
+
+class ReportFollowupForm(forms.Form):
+    question = forms.CharField(
+        label="Уточняющий вопрос к AI",
+        max_length=2000,
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"

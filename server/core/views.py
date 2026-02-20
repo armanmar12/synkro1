@@ -15,6 +15,7 @@ from .forms import (
     AmoCRMSettingsForm,
     ForcedReportForm,
     RadistSettingsForm,
+    ReportFollowupForm,
     SupabaseSettingsForm,
     TenantRuntimeSettingsForm,
     TelegramSettingsForm,
@@ -25,11 +26,13 @@ from .models import (
     JobRun,
     JobRunEvent,
     Report,
+    ReportMessage,
     Tenant,
     TenantRuntimeConfig,
     UserProfile,
     UserRole,
 )
+from .followups import build_report_followup_answer
 from .pipeline import (
     PipelineError,
     build_job_idempotency_key,
@@ -299,6 +302,63 @@ def dashboard_reports(request):
             "log_job": log_job,
             "job_events": job_events,
             "reports": reports,
+        },
+    )
+
+
+@_require_auth
+def report_detail(request, report_id: int):
+    report = (
+        Report.objects.select_related("tenant", "job_run")
+        .filter(id=report_id)
+        .first()
+    )
+    if not report:
+        return redirect("dashboard_reports")
+
+    message = None
+    followup_form = ReportFollowupForm()
+    if request.method == "POST":
+        followup_form = ReportFollowupForm(request.POST)
+        if followup_form.is_valid():
+            question = followup_form.cleaned_data["question"].strip()
+            history = list(
+                report.messages.order_by("-created_at")
+                .values_list("question", "answer")[:6]
+            )
+            history.reverse()
+            try:
+                answer = build_report_followup_answer(
+                    report=report,
+                    question=question,
+                    history=history,
+                )
+                ReportMessage.objects.create(
+                    report=report,
+                    actor=request.user if request.user.is_authenticated else None,
+                    question=question,
+                    answer=answer,
+                )
+                message = "AI follow-up saved."
+                followup_form = ReportFollowupForm()
+            except PipelineError as exc:
+                message = f"AI follow-up error: {exc}"
+        else:
+            message = "Please check your question."
+
+    report_messages = list(report.messages.select_related("actor").order_by("created_at")[:50])
+    tenant_id = request.GET.get("tenant") or report.tenant_id
+    return render(
+        request,
+        "core/report_detail.html",
+        {
+            "active": "reports",
+            "can_access_settings_menu": _can_access_settings_menu(request.user),
+            "report": report,
+            "report_messages": report_messages,
+            "followup_form": followup_form,
+            "message": message,
+            "tenant_id": tenant_id,
         },
     )
 

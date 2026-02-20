@@ -719,15 +719,57 @@ def _push_report_to_supabase(
     service_key = supabase_secret.get("service_role_key") or supabase_secret.get("service_role_jwt")
     if not supabase_url or not service_key:
         return
+    supabase_type = _to_supabase_report_type(report.report_type)
+    full_comment = f"{report.report_type}; local_report_id={report.id}"
     payload = [
         {
             "tenant_id": tenant.slug,
             "report_date": report.period_end.isoformat(),
-            "type": "daily",
+            "type": supabase_type,
             "text": report.summary_text,
-            "comment": report.report_type,
+            "comment": full_comment,
+            "source_report_id": report.id,
         }
     ]
+    try:
+        _post_supabase_reports(supabase_url, service_key, payload)
+        return
+    except HTTPError as exc:
+        body = ""
+        try:
+            body = (exc.read() or b"").decode("utf-8", errors="ignore")
+        except Exception:
+            body = ""
+        # Backward compatibility: older schema may not have source_report_id yet.
+        if exc.code == 400 and "source_report_id" in body:
+            legacy_payload = [
+                {
+                    "tenant_id": tenant.slug,
+                    "report_date": report.period_end.isoformat(),
+                    "type": supabase_type,
+                    "text": report.summary_text,
+                    "comment": full_comment,
+                }
+            ]
+            try:
+                _post_supabase_reports(supabase_url, service_key, legacy_payload)
+                return
+            except Exception:
+                logger.exception("Failed legacy Supabase push for tenant %s", tenant.slug)
+                return
+        logger.exception("Failed to push report to Supabase for tenant %s", tenant.slug)
+    except Exception:
+        logger.exception("Failed to push report to Supabase for tenant %s", tenant.slug)
+
+
+def _to_supabase_report_type(report_type: str) -> str:
+    normalized = (report_type or "").strip().lower()
+    if normalized in {"daily", "weekly", "monthly"}:
+        return normalized
+    return "daily"
+
+
+def _post_supabase_reports(supabase_url: str, service_key: str, payload: list[dict]) -> None:
     endpoint = f"{supabase_url}/rest/v1/reports"
     req = Request(
         endpoint,
@@ -741,11 +783,8 @@ def _push_report_to_supabase(
         data=json.dumps(payload).encode("utf-8"),
         method="POST",
     )
-    try:
-        with urlopen(req, timeout=15):
+    with urlopen(req, timeout=15):
             return
-    except Exception:
-        logger.exception("Failed to push report to Supabase for tenant %s", tenant.slug)
 
 
 def _send_telegram_notification(

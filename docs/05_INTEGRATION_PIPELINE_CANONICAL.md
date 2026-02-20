@@ -23,7 +23,7 @@
    - `dialog_norm` (text)
 6. Данные разных tenant не смешиваются (`tenant_id` обязателен везде).
 7. После AI-анализа отчет сохраняется в `reports`.
-8. Follow-up уточнения пользователя: максимум 2, пока в веб-интерфейсе.
+8. Follow-up уточнения доступны в вебе и Telegram (по `@`-упоминанию бота).
 
 ## 2.1 Режимы runtime-пайплайна
 - `amocrm_radist`: полный контур amoCRM + Radist + Supabase + AI + Telegram.
@@ -45,6 +45,7 @@
 ## 3.2 `public.reports`
 - Поля:
   - `tenant_id`, `report_date`, `type`, `text`, `comment`, `created_at`
+  - `source_report_id` (nullable, уникальный id отчета из приложения; позволяет строго различать несколько отчетов в один день)
 
 ## 4. Порядок пайплайна
 ## Шаг 1. amoCRM: получаем сделки и связи
@@ -119,10 +120,11 @@
 После успешного AI шага:
 - отправляем краткий отчет в Telegram (по настройкам tenant).
 
-## Шаг 8. Follow-up (до 2 уточнений)
+## Шаг 8. Follow-up (веб + Telegram)
 После выдачи отчета:
-- пользователь может задать до 2 уточняющих вопросов;
-- пока это поведение целевое для веб-сервиса (не Telegram).
+- пользователь может задавать уточняющие вопросы в карточке отчета в вебе;
+- в Telegram бот отвечает только на сообщения с `@`-упоминанием (остальные сообщения игнорируются);
+- каждый вопрос/ответ сохраняется в `ReportMessage`.
 
 ## 5. Tenant-изоляция и админ-настройки
 Изоляция достигается через:
@@ -137,7 +139,7 @@
 4. Смотрим индикаторы статуса, что шаг рабочий.
 
 ## 6. Где это в коде/репозитории
-- Схема данных Supabase: `supabase/migrations/001_init.sql`
+- Схема данных Supabase: `supabase/migrations/001_init.sql`, `supabase/migrations/002_reports_source_report_id.sql`
 - Текущий upsert скрипт: `scripts/push_deals_to_supabase.ps1`
 - Исследовательские пробы Radist/склейки: `temp/research/test api/`
 - Исторические решения и контекст: `temp/legacy_docs/SYNKRO_BUILD_PLAN_RU.md`
@@ -145,5 +147,5 @@
 ## 7. Что считать “истиной” при конфликте
 Если старые черновики противоречат:
 1. Этот документ.
-2. `supabase/migrations/001_init.sql`.
+2. `supabase/migrations/001_init.sql`, затем `supabase/migrations/002_reports_source_report_id.sql`.
 3. Реальное поведение production-кода.

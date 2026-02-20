@@ -3,6 +3,7 @@ import logging
 from celery import shared_task
 from django.utils import timezone
 
+from .followups import process_telegram_followups
 from .models import JobRun, Tenant
 from .pipeline import (
     build_job_idempotency_key,
@@ -50,6 +51,10 @@ def scheduler_tick() -> int:
                 queued += 1
         except Exception:
             logger.exception("Failed to queue scheduled job for tenant %s", config.tenant.slug)
+    try:
+        process_telegram_followups()
+    except Exception:
+        logger.exception("Failed to process Telegram follow-ups")
     return queued
 
 

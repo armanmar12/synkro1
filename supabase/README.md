@@ -1,7 +1,9 @@
 # Supabase
 
 Apply migrations:
-- In Supabase Dashboard: SQL Editor -> run `supabase/migrations/001_init.sql`
+- In Supabase Dashboard: SQL Editor -> run, in order:
+  - `supabase/migrations/001_init.sql`
+  - `supabase/migrations/002_reports_source_report_id.sql`
 - Or via Supabase CLI (if you use it): `supabase db push`
 
 Security note:

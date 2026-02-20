@@ -161,6 +161,7 @@
           <th>Job</th>
           <th>Комментарий</th>
           <th>Статус</th>
+          <th>Действия</th>
         </tr>
       </thead>
       <tbody>
@@ -171,6 +172,11 @@
             <td>{% if report.job_run %}#{{ report.job_run_id }}{% else %}-{% endif %}</td>
             <td>{{ report.summary_text|default:"-"|truncatechars:140 }}</td>
             <td>{{ report.status }}</td>
+            <td>
+              <a href="/dashboard/reports/{{ report.id }}/?tenant={{ tenant.id }}">Открыть</a>
+              |
+              <a href="/dashboard/reports/{{ report.id }}/?tenant={{ tenant.id }}" target="_blank" rel="noopener">Новое окно</a>
+            </td>
           </tr>
         {% empty %}
           <tr>
@@ -178,6 +184,8 @@
             <td class="muted">—</td>
             <td class="muted">—</td>
             <td class="muted">Нет данных</td>
+            <td class="muted">—</td>
+            <td class="muted">—</td>
           </tr>
         {% endfor %}
       </tbody>

@@ -1,0 +1,58 @@
+{% extends "core/base.html" %}
+{% block title %}Synkro - Отчет #{{ report.id }}{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="section-title">
+      <h3>Отчет #{{ report.id }}</h3>
+      <a class="btn btn-secondary" href="/dashboard/reports/?tenant={{ tenant_id }}">Назад к списку</a>
+    </div>
+    <p class="muted">
+      Tenant: {{ report.tenant.name }} ({{ report.tenant.slug }}) |
+      Тип: {{ report.report_type }} |
+      Статус: {{ report.status }} |
+      Создан: {{ report.created_at }}
+    </p>
+    <p class="muted">
+      Окно: {{ report.window_start|default:report.period_start }} - {{ report.window_end|default:report.period_end }}
+    </p>
+
+    {% if message %}
+      <p class="muted">{{ message }}</p>
+    {% endif %}
+
+    <div class="card">
+      <h3>Текст отчета</h3>
+      <div class="report-text">{{ report.summary_text|default:"-"|linebreaksbr }}</div>
+    </div>
+
+    <div class="card">
+      <h3>Уточнить у AI</h3>
+      <form method="post" class="form-grid">
+        {% csrf_token %}
+        <div>
+          <label>{{ followup_form.question.label }}</label>
+          {{ followup_form.question }}
+          {% if followup_form.question.errors %}<div class="muted">{{ followup_form.question.errors }}</div>{% endif %}
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="submit">Спросить AI</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>История уточнений</h3>
+      <div class="chat-thread">
+        {% for item in report_messages %}
+          <div class="chat-item">
+            <div class="muted">{{ item.created_at }} | {% if item.actor %}{{ item.actor }}{% else %}telegram{% endif %}</div>
+            <div><strong>Q:</strong> {{ item.question|linebreaksbr }}</div>
+            <div><strong>A:</strong> {{ item.answer|default:"-"|linebreaksbr }}</div>
+          </div>
+        {% empty %}
+          <div class="muted">Пока нет уточнений.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

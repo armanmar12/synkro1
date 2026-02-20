@@ -110,6 +110,7 @@ body {
   color: #0e141a;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
   box-shadow: 10px 10px 20px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
 }
 
@@ -242,6 +243,25 @@ label {
 
 .log-line:last-child {
   border-bottom: none;
+}
+
+.report-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.chat-thread {
+  display: grid;
+  gap: 12px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.chat-item {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  box-shadow: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
 }
 
 select.input {

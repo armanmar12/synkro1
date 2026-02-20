@@ -34,16 +34,16 @@ def sync_sources_to_supabase(
 
     radist_fetch_limit = max(int(getattr(runtime_config, "radist_fetch_limit", 200) or 200), 10)
     runtime_meta = getattr(runtime_config, "metadata", {}) or {}
-    max_amo_leads = _bounded_int(runtime_meta.get("max_amo_leads"), 500, 50, 5000)
-    max_amo_contacts = _bounded_int(runtime_meta.get("max_amo_contacts"), 800, 50, 5000)
+    max_amo_leads = _bounded_int(runtime_meta.get("max_amo_leads"), 300, 50, 2000)
+    max_amo_contacts = _bounded_int(runtime_meta.get("max_amo_contacts"), 400, 50, 2000)
     max_radist_contact_pages = _bounded_int(
-        runtime_meta.get("max_radist_contact_pages"), 25, 1, 200
+        runtime_meta.get("max_radist_contact_pages"), 10, 1, 80
     )
     max_radist_candidates = _bounded_int(
-        runtime_meta.get("max_radist_candidates"), max(radist_fetch_limit * 3, 300), 50, 3000
+        runtime_meta.get("max_radist_candidates"), max(radist_fetch_limit, 120), 50, 500
     )
     max_radist_message_pages = _bounded_int(
-        runtime_meta.get("max_radist_message_pages"), 10, 1, 50
+        runtime_meta.get("max_radist_message_pages"), 4, 1, 20
     )
 
     amo_rows = []

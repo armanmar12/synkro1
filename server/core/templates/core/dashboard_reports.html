@@ -78,7 +78,9 @@
       </div>
       <script>
         setTimeout(function () {
-          window.location.reload();
+          var params = new URLSearchParams(window.location.search);
+          params.set("tenant", "{{ tenant.id }}");
+          window.location.href = window.location.pathname + "?" + params.toString();
         }, 3000);
       </script>
     {% endif %}

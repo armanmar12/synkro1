@@ -181,6 +181,25 @@ class JobRun(models.Model):
         return f"{self.tenant.slug}: {self.job_type} ({self.status})"
 
 
+class JobRunEvent(models.Model):
+    class Level(models.TextChoices):
+        INFO = "info", "Info"
+        WARN = "warn", "Warn"
+        ERROR = "error", "Error"
+
+    job_run = models.ForeignKey(JobRun, on_delete=models.CASCADE, related_name="events")
+    level = models.CharField(max_length=10, choices=Level.choices, default=Level.INFO)
+    message = models.TextField()
+    data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self) -> str:
+        return f"JobRun {self.job_run_id}: {self.level} {self.message[:50]}"
+
+
 class Report(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"

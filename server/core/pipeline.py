@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from .connectors import ConnectorError, sync_sources_to_supabase
 from .crypto import decrypt_payload
-from .models import AuditLog, IntegrationConfig, JobRun, Report, Tenant, TenantRuntimeConfig
+from .models import AuditLog, IntegrationConfig, JobRun, JobRunEvent, Report, Tenant, TenantRuntimeConfig
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +128,8 @@ def queue_report_job(
             metadata=metadata or {},
         )
 
+    _write_job_event(job, JobRunEvent.Level.INFO, "Queued", {"trigger_type": trigger_type})
+
     _write_audit(
         tenant=tenant,
         actor=requested_by if getattr(requested_by, "is_authenticated", False) else None,
@@ -176,13 +178,16 @@ def execute_pipeline_job(job_id: int) -> None:
         _mark_running(job, "Syncing source systems", 25)
         sync_stats = _sync_sources(job, config, integrations)
         _attach_job_metadata(job, {"sync_stats": sync_stats})
+        _write_job_event(job, JobRunEvent.Level.INFO, "Sources synced", sync_stats)
 
         _mark_running(job, "Loading data from Supabase", 45)
         records = _fetch_deals_for_window(job.tenant, config, integrations, job.window_start, job.window_end)
+        _write_job_event(job, JobRunEvent.Level.INFO, "Deals loaded", {"count": len(records)})
 
         _mark_running(job, "Preparing report", 65)
         summary = _build_summary(records)
         summary["sync"] = sync_stats
+        _write_job_event(job, JobRunEvent.Level.INFO, "Summary prepared", {"summary": summary})
         report_text, ai_meta = _generate_report_text(
             tenant=job.tenant,
             config=config,
@@ -195,10 +200,12 @@ def execute_pipeline_job(job_id: int) -> None:
 
         _mark_running(job, "Saving report", 82)
         report = _save_report(job, config, report_text, summary, ai_meta)
+        _write_job_event(job, JobRunEvent.Level.INFO, "Report saved (DB)", {"report_id": report.id})
         _push_report_to_supabase(job.tenant, integrations, report)
 
         _mark_running(job, "Sending Telegram notification", 95)
         delivered = _send_telegram_notification(job.tenant, integrations, report)
+        _write_job_event(job, JobRunEvent.Level.INFO, "Telegram send attempted", {"delivered": delivered})
         if delivered:
             report.status = Report.Status.SENT
             report.save(update_fields=["status", "updated_at"])
@@ -221,6 +228,7 @@ def execute_pipeline_job(job_id: int) -> None:
                 "updated_at",
             ]
         )
+        _write_job_event(job, JobRunEvent.Level.INFO, "Done", {"report_id": report.id})
         _write_audit(
             tenant=job.tenant,
             actor=job.requested_by,
@@ -229,11 +237,14 @@ def execute_pipeline_job(job_id: int) -> None:
             metadata={"job_id": job.id, "report_id": report.id},
         )
     except PipelineError as exc:
+        _write_job_event(job, JobRunEvent.Level.ERROR, "PipelineError", {"error": str(exc)})
         _mark_failed(job, str(exc))
     except ConnectorError as exc:
+        _write_job_event(job, JobRunEvent.Level.ERROR, "ConnectorError", {"error": str(exc)})
         _mark_failed(job, str(exc))
     except Exception as exc:
         logger.exception("Unexpected pipeline error for job %s", job.id)
+        _write_job_event(job, JobRunEvent.Level.ERROR, "Unexpected error", {"error": str(exc)})
         _mark_failed(job, f"Unexpected error: {exc}")
 
 
@@ -281,6 +292,7 @@ def _mark_running(job: JobRun, step: str, progress: int) -> None:
     if not job.started_at:
         job.started_at = timezone.now()
     job.save(update_fields=["status", "current_step", "progress", "started_at", "updated_at"])
+    _write_job_event(job, JobRunEvent.Level.INFO, step, {"progress": job.progress})
 
 
 def _mark_failed(job: JobRun, error: str) -> None:
@@ -291,6 +303,7 @@ def _mark_failed(job: JobRun, error: str) -> None:
     job.save(
         update_fields=["status", "error", "current_step", "finished_at", "updated_at"]
     )
+    _write_job_event(job, JobRunEvent.Level.ERROR, "Failed", {"error": error})
     _write_audit(
         tenant=job.tenant,
         actor=job.requested_by,
@@ -743,3 +756,10 @@ def _write_audit(
         )
     except Exception:
         logger.exception("Failed to write audit log: %s", action)
+
+
+def _write_job_event(job: JobRun, level: str, message: str, data: dict | None = None) -> None:
+    try:
+        JobRunEvent.objects.create(job_run=job, level=level, message=message, data=data or {})
+    except Exception:
+        logger.exception("Failed to write job event for job %s", job.id)

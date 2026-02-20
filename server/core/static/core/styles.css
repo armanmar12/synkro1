@@ -221,6 +221,29 @@ label {
   flex-wrap: wrap;
 }
 
+.log-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  box-shadow: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+  max-height: 320px;
+  overflow: auto;
+  font-size: 13px;
+}
+
+.log-line {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid #2d353f;
+}
+
+.log-line:last-child {
+  border-bottom: none;
+}
+
 select.input {
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),

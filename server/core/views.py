@@ -20,7 +20,16 @@ from .forms import (
     TelegramSettingsForm,
     UserProfileForm,
 )
-from .models import IntegrationConfig, JobRun, Report, Tenant, TenantRuntimeConfig, UserProfile, UserRole
+from .models import (
+    IntegrationConfig,
+    JobRun,
+    JobRunEvent,
+    Report,
+    Tenant,
+    TenantRuntimeConfig,
+    UserProfile,
+    UserRole,
+)
 from .pipeline import (
     PipelineError,
     build_job_idempotency_key,
@@ -166,9 +175,15 @@ def dashboard_reports(request):
         )
 
     active_report_job = None
+    recent_jobs = []
+    job_events = []
     last_scheduled_window = None
     reports = []
     if tenant and runtime_config:
+        recent_jobs = list(
+            JobRun.objects.filter(tenant=tenant, job_type=JobRun.JobType.REPORT_BUILD)
+            .order_by("-created_at")[:10]
+        )
         active_report_job = (
             JobRun.objects.filter(
                 tenant=tenant,
@@ -178,6 +193,11 @@ def dashboard_reports(request):
             .order_by("-created_at")
             .first()
         )
+        job_for_log = active_report_job or (recent_jobs[0] if recent_jobs else None)
+        if job_for_log:
+            job_events = list(
+                JobRunEvent.objects.filter(job_run=job_for_log).order_by("created_at")[:200]
+            )
         window_start, window_end = compute_last_closed_window(runtime_config)
         last_scheduled_window = {
             "window_start": window_start,
@@ -200,6 +220,8 @@ def dashboard_reports(request):
             "forced_form": forced_form,
             "last_scheduled_window": last_scheduled_window,
             "active_report_job": active_report_job,
+            "recent_jobs": recent_jobs,
+            "job_events": job_events,
             "reports": reports,
         },
     )

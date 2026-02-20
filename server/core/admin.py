@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     AuditLog,
     IntegrationConfig,
+    JobRunEvent,
     JobRun,
     Report,
     ReportMessage,
@@ -60,6 +61,14 @@ class JobRunAdmin(admin.ModelAdmin):
     list_filter = ("job_type", "mode", "trigger_type", "status")
     search_fields = ("tenant__name", "tenant__slug")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(JobRunEvent)
+class JobRunEventAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "job_run", "level", "message")
+    list_filter = ("level",)
+    search_fields = ("job_run__tenant__slug", "job_run__tenant__name", "message")
+    readonly_fields = ("created_at",)
 
 
 @admin.register(Report)

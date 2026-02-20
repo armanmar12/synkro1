@@ -70,6 +70,9 @@
         <span class="pill">{{ active_report_job.current_step }}</span>
         <span class="pill">Job #{{ active_report_job.id }}</span>
       </div>
+      {% if active_report_job.error %}
+        <p class="muted">Ошибка: {{ active_report_job.error }}</p>
+      {% endif %}
       <div class="progress-track">
         <div class="progress-fill" style="width: {{ active_report_job.progress }}%;"></div>
       </div>
@@ -78,6 +81,49 @@
           window.location.reload();
         }, 3000);
       </script>
+    {% endif %}
+
+    {% if recent_jobs %}
+      <div class="card">
+        <h3>Задачи</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Статус</th>
+              <th>Шаг</th>
+              <th>Окно</th>
+              <th>Ошибка</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in recent_jobs %}
+              <tr>
+                <td>#{{ job.id }}</td>
+                <td>{{ job.status }} ({{ job.progress }}%)</td>
+                <td>{{ job.current_step|default:"-" }}</td>
+                <td>{{ job.window_start|default:"-" }} - {{ job.window_end|default:"-" }}</td>
+                <td>{{ job.error|default:"-"|truncatechars:120 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+    {% if job_events %}
+      <div class="card">
+        <h3>Лог выполнения</h3>
+        <div class="log-box">
+          {% for e in job_events %}
+            <div class="log-line">
+              <span class="muted">{{ e.created_at }}</span>
+              <span class="pill">{{ e.level }}</span>
+              <span>{{ e.message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
     {% endif %}
 
     <table class="table">

@@ -76,13 +76,7 @@
       <div class="progress-track">
         <div class="progress-fill" style="width: {{ active_report_job.progress }}%;"></div>
       </div>
-      <script>
-        setTimeout(function () {
-          var params = new URLSearchParams(window.location.search);
-          params.set("tenant", "{{ tenant.id }}");
-          window.location.href = window.location.pathname + "?" + params.toString();
-        }, 3000);
-      </script>
+      <p class="muted">Автообновление отключено. Обновляйте страницу вручную.</p>
     {% endif %}
 
     {% if recent_jobs %}

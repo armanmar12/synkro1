@@ -146,7 +146,12 @@ def queue_report_job(
     from .tasks import run_pipeline_job
 
     try:
-        run_pipeline_job.delay(job.id)
+        async_result = run_pipeline_job.delay(job.id)
+        if async_result and getattr(async_result, "id", None):
+            metadata_payload = job.metadata or {}
+            metadata_payload["celery_task_id"] = async_result.id
+            job.metadata = metadata_payload
+            job.save(update_fields=["metadata", "updated_at"])
     except Exception as exc:
         job.status = JobRun.Status.FAILED
         job.error = f"Failed to enqueue Celery task: {exc}"
@@ -163,6 +168,8 @@ def execute_pipeline_job(job_id: int) -> None:
         raise PipelineError(f"JobRun {job_id} not found")
     if job.status == JobRun.Status.SUCCESS:
         return
+    if job.status == JobRun.Status.FAILED and _is_stopped_by_user(job):
+        return
 
     config = get_or_create_runtime_config(job.tenant)
     if not job.window_start or not job.window_end:
@@ -172,18 +179,39 @@ def execute_pipeline_job(job_id: int) -> None:
         job.save(update_fields=["window_start", "window_end", "updated_at"])
     integrations = _load_integrations(job.tenant)
     try:
+        _ensure_not_stopped(job)
         _mark_running(job, "Checking tenant configuration", 5)
         _validate_integrations(config, integrations)
 
+        _ensure_not_stopped(job)
         _mark_running(job, "Syncing source systems", 25)
-        sync_stats = _sync_sources(job, config, integrations)
+        try:
+            sync_stats = _sync_sources(job, config, integrations)
+            sync_stats["sync_error"] = ""
+        except ConnectorError as exc:
+            # Continue with existing data in Supabase when connectors are temporarily unavailable.
+            sync_stats = {
+                "mode": config.mode,
+                "amo_rows": 0,
+                "radist_dialogs": 0,
+                "upsert_rows": 0,
+                "sync_error": str(exc),
+            }
+            _write_job_event(
+                job,
+                JobRunEvent.Level.WARN,
+                "Sync step failed, continuing with existing Supabase data",
+                {"error": str(exc)},
+            )
         _attach_job_metadata(job, {"sync_stats": sync_stats})
         _write_job_event(job, JobRunEvent.Level.INFO, "Sources synced", sync_stats)
 
+        _ensure_not_stopped(job)
         _mark_running(job, "Loading data from Supabase", 45)
         records = _fetch_deals_for_window(job.tenant, config, integrations, job.window_start, job.window_end)
         _write_job_event(job, JobRunEvent.Level.INFO, "Deals loaded", {"count": len(records)})
 
+        _ensure_not_stopped(job)
         _mark_running(job, "Preparing report", 65)
         summary = _build_summary(records)
         summary["sync"] = sync_stats
@@ -198,11 +226,13 @@ def execute_pipeline_job(job_id: int) -> None:
             summary=summary,
         )
 
+        _ensure_not_stopped(job)
         _mark_running(job, "Saving report", 82)
         report = _save_report(job, config, report_text, summary, ai_meta)
         _write_job_event(job, JobRunEvent.Level.INFO, "Report saved (DB)", {"report_id": report.id})
         _push_report_to_supabase(job.tenant, integrations, report)
 
+        _ensure_not_stopped(job)
         _mark_running(job, "Sending Telegram notification", 95)
         delivered = _send_telegram_notification(job.tenant, integrations, report)
         _write_job_event(job, JobRunEvent.Level.INFO, "Telegram send attempted", {"delivered": delivered})
@@ -246,6 +276,16 @@ def execute_pipeline_job(job_id: int) -> None:
         logger.exception("Unexpected pipeline error for job %s", job.id)
         _write_job_event(job, JobRunEvent.Level.ERROR, "Unexpected error", {"error": str(exc)})
         _mark_failed(job, f"Unexpected error: {exc}")
+
+
+def _is_stopped_by_user(job: JobRun) -> bool:
+    return (job.error or "").strip().lower().startswith("stopped by user")
+
+
+def _ensure_not_stopped(job: JobRun) -> None:
+    job.refresh_from_db(fields=["status", "error"])
+    if job.status == JobRun.Status.FAILED and _is_stopped_by_user(job):
+        raise PipelineError("Stopped by user.")
 
 
 def _sync_sources(

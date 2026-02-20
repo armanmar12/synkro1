@@ -70,6 +70,14 @@
         <span class="pill">{{ active_report_job.current_step }}</span>
         <span class="pill">Job #{{ active_report_job.id }}</span>
       </div>
+      {% if can_force_report and active_report_job.status != "success" and active_report_job.status != "failed" %}
+        <form method="post" class="form-row">
+          {% csrf_token %}
+          <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+          <input type="hidden" name="job_id" value="{{ active_report_job.id }}" />
+          <button class="btn" type="submit" name="action" value="stop_report_job">Стоп Job #{{ active_report_job.id }}</button>
+        </form>
+      {% endif %}
       {% if active_report_job.error %}
         <p class="muted">Ошибка: {{ active_report_job.error }}</p>
       {% endif %}
@@ -90,16 +98,36 @@
               <th>Шаг</th>
               <th>Окно</th>
               <th>Ошибка</th>
+              <th>Лог</th>
+              <th>Действие</th>
             </tr>
           </thead>
           <tbody>
             {% for job in recent_jobs %}
               <tr>
-                <td>#{{ job.id }}</td>
+                <td>{% if log_job and log_job.id == job.id %}<strong>#{{ job.id }}</strong>{% else %}#{{ job.id }}{% endif %}</td>
                 <td>{{ job.status }} ({{ job.progress }}%)</td>
-                <td>{{ job.current_step|default:"-" }}</td>
+                <td>
+                  {{ job.current_step|default:"-" }}
+                  {% if job.stalled_minutes %}
+                    <div class="muted">Нет обновлений {{ job.stalled_minutes }} мин</div>
+                  {% endif %}
+                </td>
                 <td>{{ job.window_start|default:"-" }} - {{ job.window_end|default:"-" }}</td>
                 <td>{{ job.error|default:"-"|truncatechars:120 }}</td>
+                <td><a href="?tenant={{ tenant.id }}&job={{ job.id }}">Открыть</a></td>
+                <td>
+                  {% if can_force_report and job.status != "success" and job.status != "failed" %}
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="tenant_id" value="{{ tenant.id }}" />
+                      <input type="hidden" name="job_id" value="{{ job.id }}" />
+                      <button class="btn" type="submit" name="action" value="stop_report_job">Стоп</button>
+                    </form>
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
@@ -109,13 +137,16 @@
 
     {% if job_events %}
       <div class="card">
-        <h3>Лог выполнения</h3>
+        <h3>Лог выполнения {% if log_job %}(Job #{{ log_job.id }}){% endif %}</h3>
         <div class="log-box">
           {% for e in job_events %}
             <div class="log-line">
               <span class="muted">{{ e.created_at }}</span>
               <span class="pill">{{ e.level }}</span>
               <span>{{ e.message }}</span>
+              {% if e.data %}
+                <span class="muted">{{ e.data }}</span>
+              {% endif %}
             </div>
           {% endfor %}
         </div>

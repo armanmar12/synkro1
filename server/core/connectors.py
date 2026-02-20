@@ -32,6 +32,20 @@ def sync_sources_to_supabase(
     if not supabase_url or not service_key:
         raise ConnectorError("Supabase credentials are incomplete.")
 
+    radist_fetch_limit = max(int(getattr(runtime_config, "radist_fetch_limit", 200) or 200), 10)
+    runtime_meta = getattr(runtime_config, "metadata", {}) or {}
+    max_amo_leads = _bounded_int(runtime_meta.get("max_amo_leads"), 500, 50, 5000)
+    max_amo_contacts = _bounded_int(runtime_meta.get("max_amo_contacts"), 800, 50, 5000)
+    max_radist_contact_pages = _bounded_int(
+        runtime_meta.get("max_radist_contact_pages"), 25, 1, 200
+    )
+    max_radist_candidates = _bounded_int(
+        runtime_meta.get("max_radist_candidates"), max(radist_fetch_limit * 3, 300), 50, 3000
+    )
+    max_radist_message_pages = _bounded_int(
+        runtime_meta.get("max_radist_message_pages"), 10, 1, 50
+    )
+
     amo_rows = []
     radist_dialogs = []
     if mode in {"amocrm_radist", "amocrm_only"}:
@@ -40,6 +54,8 @@ def sync_sources_to_supabase(
             amocrm_secret or {},
             window_start=window_start,
             window_end=window_end,
+            max_leads=max_amo_leads,
+            max_contacts=max_amo_contacts,
         )
     if mode in {"amocrm_radist", "radist_only"}:
         target_phones = None
@@ -55,8 +71,11 @@ def sync_sources_to_supabase(
             radist_secret or {},
             window_start=window_start,
             window_end=window_end,
-            fetch_limit=max(int(getattr(runtime_config, "radist_fetch_limit", 200) or 200), 10),
+            fetch_limit=radist_fetch_limit,
             target_phones=target_phones,
+            max_contact_pages=max_radist_contact_pages,
+            max_candidates=max_radist_candidates,
+            max_message_pages=max_radist_message_pages,
         )
 
     rows = _merge_rows(
@@ -82,6 +101,8 @@ def _collect_amo_rows(
     *,
     window_start: datetime,
     window_end: datetime,
+    max_leads: int,
+    max_contacts: int,
 ) -> list[dict]:
     domain = (amocrm_public.get("domain") or "").strip()
     token = (amocrm_secret.get("access_token") or "").strip()
@@ -91,7 +112,7 @@ def _collect_amo_rows(
     base = domain if domain.startswith("http") else f"https://{domain}"
     base = base.rstrip("/")
     status_map = _amo_status_map(base, token)
-    leads = _amo_fetch_leads(base, token, window_start, window_end)
+    leads = _amo_fetch_leads(base, token, window_start, window_end, max_leads=max_leads)
 
     contact_ids = {
         _to_int(contact.get("id"))
@@ -100,7 +121,7 @@ def _collect_amo_rows(
         if contact.get("id")
     }
     contact_ids.discard(0)
-    contacts_map = _amo_fetch_contacts(base, token, sorted(contact_ids))
+    contacts_map = _amo_fetch_contacts(base, token, sorted(contact_ids), max_contacts=max_contacts)
 
     rows = []
     for lead in leads:
@@ -167,7 +188,7 @@ def _amo_status_map(base_url: str, token: str) -> dict[int, str]:
 
 
 def _amo_fetch_leads(
-    base_url: str, token: str, window_start: datetime, window_end: datetime
+    base_url: str, token: str, window_start: datetime, window_end: datetime, *, max_leads: int
 ) -> list[dict]:
     from_ts = int(window_start.astimezone(dt_timezone.utc).timestamp())
     to_ts = int(window_end.astimezone(dt_timezone.utc).timestamp())
@@ -180,24 +201,34 @@ def _amo_fetch_leads(
     }
     next_url = f"{base_url}/api/v4/leads?{urlencode(params)}"
     all_leads: list[dict] = []
-    while next_url:
+    page_no = 0
+    while next_url and len(all_leads) < max_leads and page_no < 50:
         payload = _request_json(
             "GET",
             next_url,
             headers={"Authorization": f"Bearer {token}", "User-Agent": "synkro/1.0"},
+            timeout=15,
+            max_attempts=3,
         )
-        all_leads.extend((payload.get("_embedded") or {}).get("leads", []) or [])
+        batch = (payload.get("_embedded") or {}).get("leads", []) or []
+        remaining = max_leads - len(all_leads)
+        all_leads.extend(batch[:remaining])
         next_url = ((payload.get("_links") or {}).get("next") or {}).get("href")
+        page_no += 1
     return all_leads
 
 
-def _amo_fetch_contacts(base_url: str, token: str, contact_ids: list[int]) -> dict[int, dict]:
+def _amo_fetch_contacts(
+    base_url: str, token: str, contact_ids: list[int], *, max_contacts: int
+) -> dict[int, dict]:
     result: dict[int, dict] = {}
-    for contact_id in contact_ids:
+    for contact_id in contact_ids[:max_contacts]:
         payload = _request_json(
             "GET",
             f"{base_url}/api/v4/contacts/{contact_id}",
             headers={"Authorization": f"Bearer {token}", "User-Agent": "synkro/1.0"},
+            timeout=15,
+            max_attempts=3,
         )
         phones = _extract_phones_from_custom_fields(payload.get("custom_fields_values") or [])
         result[contact_id] = {"phones": [p for p in {_normalize_phone(x) for x in phones} if p]}
@@ -226,6 +257,9 @@ def _collect_radist_dialogs(
     window_end: datetime,
     fetch_limit: int,
     target_phones: set[str] | None,
+    max_contact_pages: int,
+    max_candidates: int,
+    max_message_pages: int,
 ) -> list[dict]:
     api_key = (radist_secret.get("api_key") or "").strip()
     company_id = _to_int(radist_public.get("company_id"))
@@ -235,7 +269,11 @@ def _collect_radist_dialogs(
 
     headers = {"X-Api-Key": api_key, "User-Agent": "synkro/1.0"}
     sources = _request_json(
-        "GET", f"{base_url}/companies/{company_id}/messaging/chats/sources/", headers=headers
+        "GET",
+        f"{base_url}/companies/{company_id}/messaging/chats/sources/",
+        headers=headers,
+        timeout=15,
+        max_attempts=3,
     )
     connection_ids = {
         _to_int(item.get("connection_id"))
@@ -249,6 +287,7 @@ def _collect_radist_dialogs(
 
     contacts = []
     cursor = None
+    page_no = 0
     while True:
         params = {"limit": "100"}
         if cursor:
@@ -257,10 +296,15 @@ def _collect_radist_dialogs(
             "GET",
             f"{base_url}/companies/{company_id}/messaging/chats/with_contacts/?{urlencode(params)}",
             headers=headers,
+            timeout=15,
+            max_attempts=3,
         )
         contacts.extend(payload.get("data") or [])
         cursor = ((payload.get("response_metadata") or {}).get("next_cursor") or "").strip()
+        page_no += 1
         if not cursor:
+            break
+        if page_no >= max_contact_pages:
             break
 
     candidates = []
@@ -292,7 +336,10 @@ def _collect_radist_dialogs(
         or datetime.min.replace(tzinfo=dt_timezone.utc),
         reverse=True,
     )
-    candidates = candidates[: max(fetch_limit, len(target_phones) * 3 if target_phones else fetch_limit)]
+    candidate_cap = max_candidates
+    if target_phones:
+        candidate_cap = min(candidate_cap, max(fetch_limit, len(target_phones) * 2))
+    candidates = candidates[:candidate_cap]
 
     dialogs = []
     for candidate in candidates:
@@ -307,6 +354,7 @@ def _collect_radist_dialogs(
             chat_id=chat_id,
             window_start=window_start,
             window_end=window_end,
+            max_pages=max_message_pages,
         )
         if not messages:
             continue
@@ -336,16 +384,23 @@ def _radist_fetch_messages_in_window(
     chat_id: int,
     window_start: datetime,
     window_end: datetime,
+    max_pages: int,
 ) -> list[dict]:
     all_messages = []
     seen = set()
     until = None
-    for _ in range(50):
+    for _ in range(max_pages):
         params = {"chat_id": str(chat_id), "limit": "100"}
         if until:
             params["until"] = until
         endpoint = f"{base_url}/companies/{company_id}/messaging/messages/?{urlencode(params)}"
-        batch = _request_json("GET", endpoint, headers=headers)
+        batch = _request_json(
+            "GET",
+            endpoint,
+            headers=headers,
+            timeout=15,
+            max_attempts=3,
+        )
         if not isinstance(batch, list) or not batch:
             break
 
@@ -572,6 +627,14 @@ def _dt_to_iso(value: datetime | None) -> str | None:
 def _stable_numeric_id(seed: str) -> int:
     digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()[:15]
     return int(digest, 16)
+
+
+def _bounded_int(value, default: int, minimum: int, maximum: int) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        parsed = default
+    return max(minimum, min(maximum, parsed))
 
 
 def _to_int(value) -> int:

@@ -120,7 +120,8 @@ def dashboard_reports(request):
     message = None
 
     forced_form = ForcedReportForm()
-    if request.method == "POST" and request.POST.get("action") == "run_forced_report":
+    action = request.POST.get("action")
+    if request.method == "POST" and action == "run_forced_report":
         forced_form = ForcedReportForm(request.POST)
         if not tenant or not runtime_config:
             message = "Tenant not found."
@@ -139,32 +140,73 @@ def dashboard_reports(request):
             if validation_error:
                 message = validation_error
             else:
-                idempotency_key = build_job_idempotency_key(
-                    tenant.id,
-                    JobRun.TriggerType.MANUAL,
-                    runtime_config.mode,
-                    window_start,
-                    window_end,
-                )
-                try:
-                    job, created = queue_report_job(
+                active_job = (
+                    JobRun.objects.filter(
                         tenant=tenant,
-                        runtime_config=runtime_config,
-                        trigger_type=JobRun.TriggerType.MANUAL,
-                        window_start=window_start,
-                        window_end=window_end,
-                        requested_by=request.user,
-                        idempotency_key=idempotency_key,
-                        metadata={"source": "dashboard_reports"},
+                        job_type=JobRun.JobType.REPORT_BUILD,
+                        status__in=[JobRun.Status.PENDING, JobRun.Status.RUNNING],
                     )
-                    if created:
-                        message = f"Forced report queued. Job #{job.id}."
-                    else:
-                        message = f"Matching job already exists. Job #{job.id}."
-                except PipelineError as exc:
-                    message = str(exc)
+                    .order_by("-created_at")
+                    .first()
+                )
+                if active_job:
+                    message = (
+                        f"Active report job already exists. Job #{active_job.id}. "
+                        "Stop current job or wait for completion."
+                    )
+                else:
+                    idempotency_key = build_job_idempotency_key(
+                        tenant.id,
+                        JobRun.TriggerType.MANUAL,
+                        runtime_config.mode,
+                        window_start,
+                        window_end,
+                    )
+                    try:
+                        job, created = queue_report_job(
+                            tenant=tenant,
+                            runtime_config=runtime_config,
+                            trigger_type=JobRun.TriggerType.MANUAL,
+                            window_start=window_start,
+                            window_end=window_end,
+                            requested_by=request.user,
+                            idempotency_key=idempotency_key,
+                            metadata={"source": "dashboard_reports"},
+                        )
+                        if created:
+                            message = f"Forced report queued. Job #{job.id}."
+                        else:
+                            message = f"Matching job already exists. Job #{job.id}."
+                    except PipelineError as exc:
+                        message = str(exc)
+    elif request.method == "POST" and action == "stop_report_job":
+        if not tenant:
+            message = "Tenant not found."
+        elif not can_force_report:
+            message = "Stop is allowed only from a client account."
+        else:
+            job_id = request.POST.get("job_id")
+            job = (
+                JobRun.objects.filter(
+                    id=job_id,
+                    tenant=tenant,
+                    job_type=JobRun.JobType.REPORT_BUILD,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+            if not job:
+                message = "Job not found."
+            elif job.status not in [JobRun.Status.PENDING, JobRun.Status.RUNNING]:
+                message = f"Job #{job.id} already finished with status '{job.status}'."
+            else:
+                revoked = _stop_report_job(job, request.user)
+                if revoked:
+                    message = f"Job #{job.id} stopped and Celery task revoked."
+                else:
+                    message = f"Job #{job.id} marked as stopped."
 
-    if request.method != "POST" and runtime_config:
+    if (request.method != "POST" or action == "stop_report_job") and runtime_config:
         default_end = timezone.now()
         default_start = default_end - timedelta(hours=min(runtime_config.max_force_window_hours, 24))
         forced_form = ForcedReportForm(
@@ -177,6 +219,7 @@ def dashboard_reports(request):
     active_report_job = None
     recent_jobs = []
     job_events = []
+    log_job = None
     last_scheduled_window = None
     reports = []
     if tenant and runtime_config:
@@ -184,6 +227,15 @@ def dashboard_reports(request):
             JobRun.objects.filter(tenant=tenant, job_type=JobRun.JobType.REPORT_BUILD)
             .order_by("-created_at")[:10]
         )
+        now_ts = timezone.now()
+        for job in recent_jobs:
+            stalled_minutes = None
+            if job.status == JobRun.Status.RUNNING and job.updated_at:
+                delta = now_ts - job.updated_at
+                if delta.total_seconds() >= 300:
+                    stalled_minutes = int(delta.total_seconds() // 60)
+            job.stalled_minutes = stalled_minutes
+
         active_report_job = (
             JobRun.objects.filter(
                 tenant=tenant,
@@ -193,11 +245,34 @@ def dashboard_reports(request):
             .order_by("-created_at")
             .first()
         )
-        job_for_log = active_report_job or (recent_jobs[0] if recent_jobs else None)
-        if job_for_log:
-            job_events = list(
-                JobRunEvent.objects.filter(job_run=job_for_log).order_by("created_at")[:200]
+
+        selected_job_id = request.GET.get("job") or request.POST.get("job_id")
+        if selected_job_id:
+            log_job = (
+                JobRun.objects.filter(
+                    id=selected_job_id,
+                    tenant=tenant,
+                    job_type=JobRun.JobType.REPORT_BUILD,
+                )
+                .first()
             )
+        if not log_job:
+            log_job = (
+                JobRun.objects.filter(
+                    tenant=tenant,
+                    job_type=JobRun.JobType.REPORT_BUILD,
+                    status=JobRun.Status.RUNNING,
+                )
+                .order_by("-updated_at")
+                .first()
+            )
+        if not log_job and recent_jobs:
+            log_job = recent_jobs[0]
+        if log_job:
+            job_events = list(
+                JobRunEvent.objects.filter(job_run=log_job).order_by("created_at")[:200]
+            )
+
         window_start, window_end = compute_last_closed_window(runtime_config)
         last_scheduled_window = {
             "window_start": window_start,
@@ -221,6 +296,7 @@ def dashboard_reports(request):
             "last_scheduled_window": last_scheduled_window,
             "active_report_job": active_report_job,
             "recent_jobs": recent_jobs,
+            "log_job": log_job,
             "job_events": job_events,
             "reports": reports,
         },
@@ -748,6 +824,42 @@ def _can_run_reports_as_client(user, tenant: Tenant | None) -> bool:
         is_active=True,
         role=UserRole.Role.USER,
     ).filter(Q(tenant=tenant) | Q(tenant__isnull=True)).exists()
+
+
+def _stop_report_job(job: JobRun, actor) -> bool:
+    metadata = job.metadata or {}
+    celery_task_id = str(metadata.get("celery_task_id") or "").strip()
+    revoked = False
+
+    if celery_task_id:
+        try:
+            from synkro.celery import app as celery_app
+
+            celery_app.control.revoke(celery_task_id, terminate=True, signal="SIGTERM")
+            revoked = True
+        except Exception:
+            revoked = False
+
+    job.status = JobRun.Status.FAILED
+    job.current_step = "Stopped by user"
+    job.error = "Stopped by user."
+    job.finished_at = timezone.now()
+    job.save(update_fields=["status", "current_step", "error", "finished_at", "updated_at"])
+
+    actor_label = "system"
+    if getattr(actor, "is_authenticated", False):
+        actor_label = actor.get_username() or str(actor.id)
+    JobRunEvent.objects.create(
+        job_run=job,
+        level=JobRunEvent.Level.WARN,
+        message="Stopped by user",
+        data={
+            "actor": actor_label,
+            "celery_task_id": celery_task_id,
+            "revoked": revoked,
+        },
+    )
+    return revoked
 
 
 def _check_amocrm(domain: str, access_token: str) -> tuple[bool, str]:

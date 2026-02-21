@@ -53,6 +53,7 @@ Synkro - веб-сервис для B2B-аналитики клиентских 
 3. `docs/03_TECH_STACK_AND_STRUCTURE.md`
 4. `docs/04_RUN_DEPLOY_GIT_AND_CHANGELOG.md`
 5. `docs/05_INTEGRATION_PIPELINE_CANONICAL.md`
+6. `docs/06_TENANTS_AND_USERS.md`
 
 ## 7. Как поддерживать документы живыми
 При любом изменении:

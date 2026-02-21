@@ -97,6 +97,15 @@ class UserProfileForm(forms.Form):
 
 
 class TenantRuntimeSettingsForm(forms.Form):
+    FOLLOWUP_HOURS_CHOICES = [
+        (1, "1 час"),
+        (2, "2 часа"),
+        (4, "4 часа"),
+        (8, "8 часов"),
+        (10, "10 часов"),
+        (16, "16 часов"),
+    ]
+
     mode = forms.ChoiceField(label="Режим работы", choices=TenantRuntimeConfig.Mode.choices)
     timezone = forms.CharField(label="Часовой пояс", max_length=64)
     business_day_start = forms.TimeField(
@@ -120,8 +129,10 @@ class TenantRuntimeSettingsForm(forms.Form):
     max_force_window_hours = forms.IntegerField(
         label="Ручной запуск: максимум часов", min_value=1, max_value=24
     )
-    telegram_followup_minutes = forms.IntegerField(
-        label="Окно вопросов в Telegram (мин)", min_value=1, max_value=240
+    telegram_followup_hours = forms.TypedChoiceField(
+        label="Окно вопросов (часы)",
+        choices=FOLLOWUP_HOURS_CHOICES,
+        coerce=int,
     )
 
     def __init__(self, *args, **kwargs):

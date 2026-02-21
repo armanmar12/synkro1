@@ -62,3 +62,7 @@
 - Усилена запись в Supabase `public.reports`: добавлен `source_report_id` (с обратной совместимостью), чтобы несколько отчетов за один день сохранялись отдельными строками.
 - Добавлена SQL-миграция Supabase: `supabase/migrations/002_reports_source_report_id.sql`.
 - Ключевые файлы: `server/core/followups.py`, `server/core/views.py`, `server/core/templates/core/report_detail.html`, `server/core/pipeline.py`, `server/core/tasks.py`, `server/core/forms.py`, `server/core/urls.py`, `server/core/templates/core/dashboard_reports.html`, `supabase/migrations/002_reports_source_report_id.sql`.
+
+### 9) Follow-up окно вопросов
+- В настройках runtime вместо числового поля появился фиксированный список часов: `1 2 4 8 10 16`, ограниченный строго 18 часами, и новые вопросы можно задавать только пока хранится дедлайн follow-up внутри этого окна.
+- Карточка отчета и Telegram-фоллоу-ап сейчас проверяют этот дедлайн и блокируют форму/отвечают отказом, если окно закрыто; ключевые файлы: `server/core/forms.py`, `server/core/views.py`, `server/core/templates/core/dashboard_settings.html`, `server/core/templates/core/report_detail.html`, `server/core/followups.py`.

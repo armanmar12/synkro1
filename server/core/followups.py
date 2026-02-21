@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from datetime import timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -9,7 +10,7 @@ from django.utils import timezone
 
 from .crypto import decrypt_payload
 from .models import IntegrationConfig, Report, ReportMessage, Tenant
-from .pipeline import PipelineError, _call_ai
+from .pipeline import PipelineError, _call_ai, get_or_create_runtime_config
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ def _process_tenant_telegram_followups(tenant: Tenant) -> int:
     chat_id = str(public_config.get("chat_id") or "").strip()
     if not bot_token or not chat_id:
         return 0
+    runtime_config = get_or_create_runtime_config(tenant)
 
     saved_offset = public_config.get("telegram_update_offset")
     offset = _safe_int(saved_offset)
@@ -150,6 +152,18 @@ def _process_tenant_telegram_followups(tenant: Tenant) -> int:
         report = Report.objects.filter(tenant=tenant).order_by("-created_at").first()
         if not report:
             _send_telegram_message(bot_token, chat_id, "Для этого tenant пока нет отчета.")
+            continue
+
+        followup_deadline_at = _resolve_report_followup_deadline(
+            report,
+            runtime_config.telegram_followup_minutes,
+        )
+        if timezone.now() > followup_deadline_at:
+            _send_telegram_message(
+                bot_token,
+                chat_id,
+                f"Окно вопросов по отчету закрыто (до {followup_deadline_at:%Y-%m-%d %H:%M}).",
+            )
             continue
 
         history = list(
@@ -256,3 +270,9 @@ def _safe_int(value) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _resolve_report_followup_deadline(report: Report, fallback_minutes: int):
+    if report.followup_deadline_at:
+        return report.followup_deadline_at
+    return report.created_at + timedelta(minutes=fallback_minutes)

@@ -316,35 +316,40 @@ def report_detail(request, report_id: int):
     if not report:
         return redirect("dashboard_reports")
 
+    followup_deadline_at = _resolve_report_followup_deadline(report)
+    followup_is_open = timezone.now() <= followup_deadline_at
     message = None
     followup_form = ReportFollowupForm()
     if request.method == "POST":
-        followup_form = ReportFollowupForm(request.POST)
-        if followup_form.is_valid():
-            question = followup_form.cleaned_data["question"].strip()
-            history = list(
-                report.messages.order_by("-created_at")
-                .values_list("question", "answer")[:6]
-            )
-            history.reverse()
-            try:
-                answer = build_report_followup_answer(
-                    report=report,
-                    question=question,
-                    history=history,
-                )
-                ReportMessage.objects.create(
-                    report=report,
-                    actor=request.user if request.user.is_authenticated else None,
-                    question=question,
-                    answer=answer,
-                )
-                message = "AI follow-up saved."
-                followup_form = ReportFollowupForm()
-            except PipelineError as exc:
-                message = f"AI follow-up error: {exc}"
+        if not followup_is_open:
+            message = "Follow-up window is closed for this report."
         else:
-            message = "Please check your question."
+            followup_form = ReportFollowupForm(request.POST)
+            if followup_form.is_valid():
+                question = followup_form.cleaned_data["question"].strip()
+                history = list(
+                    report.messages.order_by("-created_at")
+                    .values_list("question", "answer")[:6]
+                )
+                history.reverse()
+                try:
+                    answer = build_report_followup_answer(
+                        report=report,
+                        question=question,
+                        history=history,
+                    )
+                    ReportMessage.objects.create(
+                        report=report,
+                        actor=request.user if request.user.is_authenticated else None,
+                        question=question,
+                        answer=answer,
+                    )
+                    message = "AI follow-up saved."
+                    followup_form = ReportFollowupForm()
+                except PipelineError as exc:
+                    message = f"AI follow-up error: {exc}"
+            else:
+                message = "Please check your question."
 
     report_messages = list(report.messages.select_related("actor").order_by("created_at")[:50])
     tenant_id = request.GET.get("tenant") or report.tenant_id
@@ -357,6 +362,8 @@ def report_detail(request, report_id: int):
             "report": report,
             "report_messages": report_messages,
             "followup_form": followup_form,
+            "followup_deadline_at": followup_deadline_at,
+            "followup_is_open": followup_is_open,
             "message": message,
             "tenant_id": tenant_id,
         },
@@ -482,6 +489,7 @@ def dashboard_settings(request):
             if action == "save_runtime":
                 runtime_form = TenantRuntimeSettingsForm(request.POST)
                 if runtime_form.is_valid():
+                    followup_hours = runtime_form.cleaned_data["telegram_followup_hours"]
                     runtime_config.mode = runtime_form.cleaned_data["mode"]
                     runtime_config.timezone = runtime_form.cleaned_data["timezone"].strip()
                     runtime_config.business_day_start = runtime_form.cleaned_data["business_day_start"]
@@ -497,9 +505,7 @@ def dashboard_settings(request):
                     runtime_config.max_force_window_hours = runtime_form.cleaned_data[
                         "max_force_window_hours"
                     ]
-                    runtime_config.telegram_followup_minutes = runtime_form.cleaned_data[
-                        "telegram_followup_minutes"
-                    ]
+                    runtime_config.telegram_followup_minutes = followup_hours * 60
                     runtime_config.save()
                     show_amocrm_settings = runtime_config.mode in {
                         TenantRuntimeConfig.Mode.AMOCRM_RADIST,
@@ -780,7 +786,9 @@ def dashboard_settings(request):
                     "min_dialogs_for_report": runtime_config.min_dialogs_for_report,
                     "max_force_lookback_days": runtime_config.max_force_lookback_days,
                     "max_force_window_hours": runtime_config.max_force_window_hours,
-                    "telegram_followup_minutes": runtime_config.telegram_followup_minutes,
+                    "telegram_followup_hours": _normalize_followup_hours_for_form(
+                        int(runtime_config.telegram_followup_minutes or 0)
+                    ),
                 }
             )
 
@@ -821,6 +829,24 @@ def dashboard_settings(request):
         "has_secret_telegram": has_secret_telegram,
     }
     return render(request, "core/dashboard_settings.html", context)
+
+
+def _resolve_report_followup_deadline(report: Report):
+    if report.followup_deadline_at:
+        return report.followup_deadline_at
+    runtime_config = get_or_create_runtime_config(report.tenant)
+    return report.created_at + timedelta(minutes=runtime_config.telegram_followup_minutes)
+
+
+def _normalize_followup_hours_for_form(minutes: int) -> int:
+    allowed_hours = [1, 2, 4, 8, 10, 16]
+    if minutes <= 0:
+        return 1
+    hours = (minutes + 59) // 60
+    valid = [value for value in allowed_hours if value <= hours]
+    if valid:
+        return valid[-1]
+    return allowed_hours[0]
 
 
 def _check_supabase(url: str, anon_key: str) -> tuple[bool, str]:

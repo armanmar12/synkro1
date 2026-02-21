@@ -15,6 +15,9 @@
     <p class="muted">
       Окно: {{ report.window_start|default:report.period_start }} - {{ report.window_end|default:report.period_end }}
     </p>
+    <p class="muted">
+      Follow-up до: {{ followup_deadline_at }}
+    </p>
 
     {% if message %}
       <p class="muted">{{ message }}</p>
@@ -27,17 +30,21 @@
 
     <div class="card">
       <h3>Уточнить у AI</h3>
-      <form method="post" class="form-grid">
-        {% csrf_token %}
-        <div>
-          <label>{{ followup_form.question.label }}</label>
-          {{ followup_form.question }}
-          {% if followup_form.question.errors %}<div class="muted">{{ followup_form.question.errors }}</div>{% endif %}
-        </div>
-        <div class="form-actions">
-          <button class="btn" type="submit">Спросить AI</button>
-        </div>
-      </form>
+      {% if followup_is_open %}
+        <form method="post" class="form-grid">
+          {% csrf_token %}
+          <div>
+            <label>{{ followup_form.question.label }}</label>
+            {{ followup_form.question }}
+            {% if followup_form.question.errors %}<div class="muted">{{ followup_form.question.errors }}</div>{% endif %}
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Спросить AI</button>
+          </div>
+        </form>
+      {% else %}
+        <p class="muted">Окно вопросов закрыто для этого отчета.</p>
+      {% endif %}
     </div>
 
     <div class="card">

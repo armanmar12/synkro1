@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!doctype html>
 <html lang="ru">
   <head>
@@ -8,30 +8,104 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="{% static 'core/styles.css' %}" />
   </head>
   <body>
     <div class="page">
-      <div class="topbar">
-        <div class="brand">Synkro.kz</div>
+      <aside class="sidebar">
+        <a class="brand" href="/dashboard/">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-text">Synkro</span>
+        </a>
+
         <nav class="nav">
-          <a class="{% if active == 'overview' %}active{% endif %}" href="/dashboard/">Обзор</a>
-          <a class="{% if active == 'reports' %}active{% endif %}" href="/dashboard/reports/">Отчеты</a>
+          <a class="nav-link {% if active == 'overview' %}active{% endif %}" href="/dashboard/">Обзор</a>
+          <a class="nav-link {% if active == 'reports' %}active{% endif %}" href="/dashboard/reports/">Отчеты</a>
           {% if user.is_authenticated %}
-            <a class="{% if active == 'profile' %}active{% endif %}" href="/dashboard/profile/">Профиль</a>
+            <a class="nav-link {% if active == 'profile' %}active{% endif %}" href="/dashboard/profile/">Профиль</a>
           {% endif %}
           {% if can_access_settings_menu %}
-            <a class="{% if active == 'settings' %}active{% endif %}" href="/dashboard/settings/">Настройки</a>
+            <a class="nav-link {% if active == 'settings' %}active{% endif %}" href="/dashboard/settings/">Настройки</a>
           {% endif %}
-          <a href="/logout/">Выход</a>
         </nav>
-      </div>
-      <div class="container">
-        {% block content %}{% endblock %}
-      </div>
+
+        <div class="sidebar-footer">
+          <div class="profile-chip">
+            <div class="avatar">
+              {% if user.is_authenticated %}
+                {{ user.username|slice:":1"|upper }}
+              {% else %}
+                S
+              {% endif %}
+            </div>
+            <div>
+              <p class="profile-name">
+                {% if user.is_authenticated %}
+                  {{ user.get_full_name|default:user.username }}
+                {% else %}
+                  Временный доступ
+                {% endif %}
+              </p>
+              <p class="profile-role">{% if can_access_settings_menu %}Администратор{% else %}Оператор{% endif %}</p>
+            </div>
+          </div>
+          <a class="logout-link" href="/logout/">Выйти</a>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <h1 class="page-title">
+              {% block page_title %}
+                {% if active == "overview" %}
+                  Dashboard
+                {% elif active == "reports" %}
+                  Reports
+                {% elif active == "profile" %}
+                  Profile
+                {% elif active == "settings" %}
+                  Settings
+                {% else %}
+                  Synkro
+                {% endif %}
+              {% endblock %}
+            </h1>
+            <p class="page-subtitle">Рабочее пространство Synkro</p>
+          </div>
+
+          <div class="top-actions">
+            <span class="icon-badge" aria-hidden="true">?</span>
+            <span class="icon-badge" aria-hidden="true">!</span>
+            <div class="user-mini">
+              <div class="user-mini-avatar">
+                {% if user.is_authenticated %}
+                  {{ user.username|slice:":1"|upper }}
+                {% else %}
+                  S
+                {% endif %}
+              </div>
+              <div class="user-mini-meta">
+                <span class="user-mini-name">
+                  {% if user.is_authenticated %}
+                    {{ user.username }}
+                  {% else %}
+                    Synkro
+                  {% endif %}
+                </span>
+                <span class="user-mini-role">{% if can_access_settings_menu %}admin{% else %}member{% endif %}</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="container">
+          {% block content %}{% endblock %}
+        </div>
+      </main>
     </div>
   </body>
 </html>

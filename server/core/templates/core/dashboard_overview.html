@@ -1,17 +1,66 @@
 {% extends "core/base.html" %}
 {% block title %}Synkro - Обзор{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 {% block content %}
-  <div class="card">
-    <div class="section-title">
-      <h3>Общая статистика</h3>
-      <span class="pill">UTC+5</span>
+  <div class="stats-grid">
+    <div class="card metric-card metric-card-lilac">
+      <p class="metric-label">Total reports</p>
+      <p class="metric-value">128</p>
+      <p class="metric-note">За последние 30 дней</p>
     </div>
-    <p class="muted">Пока пусто. Здесь появятся ключевые метрики и статус интеграций.</p>
-    <div class="status-row">
-      <div class="status-dot ok"></div>
-      <div class="status-dot ok"></div>
-      <div class="status-dot"></div>
-      <div class="status-dot"></div>
+    <div class="card metric-card metric-card-cyan">
+      <p class="metric-label">Avg processing</p>
+      <p class="metric-value">17.3m</p>
+      <p class="metric-note">Среднее время обработки</p>
+    </div>
+    <div class="card metric-card metric-card-green">
+      <p class="metric-label">Pipeline health</p>
+      <p class="metric-value">74.8%</p>
+      <p class="metric-note">Стабильность интеграций</p>
+    </div>
+    <div class="card metric-card metric-card-lime">
+      <p class="metric-label">Team response</p>
+      <p class="metric-value">6.4m</p>
+      <p class="metric-note">Среднее время реакции</p>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <div class="card">
+      <div class="section-title">
+        <h3>Общая статистика</h3>
+        <span class="pill">UTC+5</span>
+      </div>
+      <p class="muted">Здесь будут ключевые метрики по отчетам, качеству данных и стабильности запуска.</p>
+      <div class="status-row">
+        <div class="status-dot ok"></div>
+        <div class="status-dot ok"></div>
+        <div class="status-dot"></div>
+        <div class="status-dot"></div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width: 48%;"></div>
+      </div>
+    </div>
+
+    <div class="card side-panel">
+      <h3>Быстрые действия</h3>
+      <a class="action-row" href="/dashboard/reports/">
+        <span>Открыть отчеты</span>
+        <span>→</span>
+      </a>
+      {% if user.is_authenticated %}
+        <a class="action-row" href="/dashboard/profile/">
+          <span>Профиль пользователя</span>
+          <span>→</span>
+        </a>
+      {% endif %}
+      {% if can_access_settings_menu %}
+        <a class="action-row" href="/dashboard/settings/">
+          <span>Параметры интеграций</span>
+          <span>→</span>
+        </a>
+      {% endif %}
     </div>
   </div>
 

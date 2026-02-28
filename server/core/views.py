@@ -112,10 +112,6 @@ def dashboard_reports(request):
     tenant = None
     if tenant_id:
         tenant = Tenant.objects.filter(id=tenant_id).first()
-    if tenant is None:
-        tenant = Tenant.objects.filter(slug="globalfruit").first()
-    if tenant is None:
-        tenant = Tenant.objects.order_by("name").first()
 
     tenants = list(Tenant.objects.order_by("name"))
     runtime_config = get_or_create_runtime_config(tenant) if tenant else None
@@ -419,10 +415,6 @@ def dashboard_settings(request):
     tenant = None
     if tenant_id:
         tenant = Tenant.objects.filter(id=tenant_id).first()
-    if tenant is None:
-        tenant = Tenant.objects.filter(slug="globalfruit").first()
-    if tenant is None:
-        tenant = Tenant.objects.order_by("name").first()
 
     tenants = list(Tenant.objects.order_by("name"))
     supabase_config = None
@@ -448,6 +440,10 @@ def dashboard_settings(request):
     has_secret_telegram = False
     show_amocrm_settings = True
     show_radist_settings = True
+
+    action = request.POST.get("action")
+    if request.method == "POST" and action and tenant is None:
+        message = "Сначала выберите tenant."
 
     can_manage_settings = _can_manage_settings(request.user, tenant)
     if tenant and can_manage_settings:
@@ -484,7 +480,6 @@ def dashboard_settings(request):
         has_secret_telegram = bool(telegram_secret.get("bot_token"))
         ai_model_choices = _model_choices_from_public(ai_config.public_config.get("available_models", []))
 
-        action = request.POST.get("action")
         if request.method == "POST" and action:
             if action == "save_runtime":
                 runtime_form = TenantRuntimeSettingsForm(request.POST)

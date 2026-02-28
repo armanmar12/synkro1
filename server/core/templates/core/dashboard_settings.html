@@ -28,13 +28,16 @@
       {% if tenants %}
         <form method="get" class="form-row">
           <label>Tenant</label>
-          <select name="tenant" class="input">
+          <select name="tenant" class="input" required>
+            <option value="" {% if not tenant %}selected{% endif %}>Выберите tenant...</option>
             {% for t in tenants %}
               <option value="{{ t.id }}" {% if tenant and t.id == tenant.id %}selected{% endif %}>{{ t.name }} ({{ t.slug }})</option>
             {% endfor %}
           </select>
           <button class="btn" type="submit">Выбрать</button>
         </form>
+      {% else %}
+        <p class="muted">Нет tenant'ов. Создайте первый в админке.</p>
       {% endif %}
 
       {% if tenant and can_manage_settings %}
@@ -95,6 +98,8 @@
             <button class="btn" type="submit" name="action" value="save_runtime">Сохранить runtime</button>
           </div>
         </form>
+      {% elif not tenant %}
+        <p class="muted tenant-empty">Сначала выберите tenant, затем откроются runtime-настройки.</p>
       {% endif %}
     </div>
 
@@ -141,6 +146,8 @@
             <button class="btn btn-secondary" type="submit" name="action" value="check_supabase">Проверить</button>
           </div>
         </form>
+      {% elif not tenant %}
+        <p class="muted tenant-empty">Выберите tenant, чтобы посмотреть и изменить интеграционные ключи.</p>
       {% endif %}
     </div>
 
@@ -293,6 +300,8 @@
             <button class="btn btn-secondary" type="submit" name="action" value="check_ai">Проверить</button>
           </div>
         </form>
+      {% elif not tenant %}
+        <p class="muted tenant-empty">Выберите tenant, чтобы открыть AI-настройки.</p>
       {% endif %}
     </div>
 
@@ -329,6 +338,8 @@
             <button class="btn btn-secondary" type="submit" name="action" value="check_telegram">Проверить</button>
           </div>
         </form>
+      {% elif not tenant %}
+        <p class="muted tenant-empty">Выберите tenant, чтобы открыть Telegram-настройки.</p>
       {% endif %}
     </div>
   </div>

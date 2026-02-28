@@ -450,6 +450,14 @@ a {
   color: var(--muted);
 }
 
+.tenant-empty {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #c9d6e7;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;

@@ -9,13 +9,16 @@
     {% if tenants %}
       <form method="get" class="form-row">
         <label>Tenant</label>
-        <select name="tenant" class="input">
+        <select name="tenant" class="input" required>
+          <option value="" {% if not tenant %}selected{% endif %}>Выберите tenant...</option>
           {% for t in tenants %}
             <option value="{{ t.id }}" {% if tenant and t.id == tenant.id %}selected{% endif %}>{{ t.name }} ({{ t.slug }})</option>
           {% endfor %}
         </select>
         <button class="btn" type="submit">Выбрать</button>
       </form>
+    {% else %}
+      <p class="muted">Нет tenant'ов. Создайте первый в админке.</p>
     {% endif %}
 
     {% if tenant and runtime_config %}
@@ -29,6 +32,9 @@
 
     {% if message %}
       <p class="muted">{{ message }}</p>
+    {% endif %}
+    {% if not tenant and tenants %}
+      <p class="muted tenant-empty">Сначала выберите tenant, затем загрузятся отчеты и задачи.</p>
     {% endif %}
     {% if not can_force_report and tenant %}
       <p class="muted">Запуск принудительного отчета доступен только для клиентской роли.</p>
@@ -153,42 +159,44 @@
       </div>
     {% endif %}
 
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Окно</th>
-          <th>Тип</th>
-          <th>Job</th>
-          <th>Комментарий</th>
-          <th>Статус</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for report in reports %}
+    {% if tenant %}
+      <table class="table">
+        <thead>
           <tr>
-            <td>{{ report.window_start|default:report.period_start }} - {{ report.window_end|default:report.period_end }}</td>
-            <td>{{ report.report_type }}</td>
-            <td>{% if report.job_run %}#{{ report.job_run_id }}{% else %}-{% endif %}</td>
-            <td>{{ report.summary_text|default:"-"|truncatechars:140 }}</td>
-            <td>{{ report.status }}</td>
-            <td>
-              <a href="/dashboard/reports/{{ report.id }}/?tenant={{ tenant.id }}">Открыть</a>
-              |
-              <a href="/dashboard/reports/{{ report.id }}/?tenant={{ tenant.id }}" target="_blank" rel="noopener">Новое окно</a>
-            </td>
+            <th>Окно</th>
+            <th>Тип</th>
+            <th>Job</th>
+            <th>Комментарий</th>
+            <th>Статус</th>
+            <th>Действия</th>
           </tr>
-        {% empty %}
-          <tr>
-            <td class="muted">—</td>
-            <td class="muted">—</td>
-            <td class="muted">—</td>
-            <td class="muted">Нет данных</td>
-            <td class="muted">—</td>
-            <td class="muted">—</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for report in reports %}
+            <tr>
+              <td>{{ report.window_start|default:report.period_start }} - {{ report.window_end|default:report.period_end }}</td>
+              <td>{{ report.report_type }}</td>
+              <td>{% if report.job_run %}#{{ report.job_run_id }}{% else %}-{% endif %}</td>
+              <td>{{ report.summary_text|default:"-"|truncatechars:140 }}</td>
+              <td>{{ report.status }}</td>
+              <td>
+                <a href="/dashboard/reports/{{ report.id }}/?tenant={{ tenant.id }}">Открыть</a>
+                |
+                <a href="/dashboard/reports/{{ report.id }}/?tenant={{ tenant.id }}" target="_blank" rel="noopener">Новое окно</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td class="muted">—</td>
+              <td class="muted">—</td>
+              <td class="muted">—</td>
+              <td class="muted">Нет данных</td>
+              <td class="muted">—</td>
+              <td class="muted">—</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
   </div>
 {% endblock %}

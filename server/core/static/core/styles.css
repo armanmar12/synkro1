@@ -317,6 +317,10 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.settings-grid {
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+}
+
 .stats-grid {
   display: grid;
   gap: 14px;
@@ -763,6 +767,10 @@ label {
   }
 
   .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-grid {
     grid-template-columns: 1fr;
   }
 

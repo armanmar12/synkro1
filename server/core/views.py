@@ -71,6 +71,10 @@ def _model_choices_from_public(raw_models) -> list[tuple[str, str]]:
     return model_choices
 
 
+def landing_view(request):
+    return render(request, "main/landing.html")
+
+
 def login_view(request):
     context = {}
     if request.method == "POST":

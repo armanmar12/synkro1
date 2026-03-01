@@ -11,8 +11,28 @@ load_dotenv(ROOT_DIR / ".env")
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-dev-key")
 # Default to debug locally unless explicitly disabled in .env.
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
-raw_allowed_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
-ALLOWED_HOSTS = [h.strip() for h in raw_allowed_hosts.split(",") if h.strip()]
+
+
+def _split_csv_env(name: str, default: str = "") -> list[str]:
+    raw_value = os.environ.get(name, default)
+    return [v.strip() for v in raw_value.split(",") if v.strip()]
+
+
+ALLOWED_HOSTS = _split_csv_env(
+    "DJANGO_ALLOWED_HOSTS",
+    "synkro.site,www.synkro.site,localhost,127.0.0.1",
+)
+CSRF_TRUSTED_ORIGINS = _split_csv_env(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "https://synkro.site,https://www.synkro.site",
+)
+# Kept as env-driven setting for deployments that add django-cors-headers.
+CORS_ALLOWED_ORIGINS = _split_csv_env("DJANGO_CORS_ALLOWED_ORIGINS")
+SITE_URL = os.environ.get("SITE_URL", "https://synkro.site")
+BASE_URL = os.environ.get("BASE_URL", SITE_URL)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 INTEGRATION_SECRET_KEY = os.environ.get("INTEGRATION_SECRET_KEY", "")
 
 INSTALLED_APPS = [
@@ -42,7 +62,10 @@ ROOT_URLCONF = "synkro.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [
+            BASE_DIR / "templates",
+            ROOT_DIR / "main" / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -83,6 +106,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [ROOT_DIR / "main" / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
